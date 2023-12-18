@@ -31,7 +31,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Cart cart;
 
 
 }

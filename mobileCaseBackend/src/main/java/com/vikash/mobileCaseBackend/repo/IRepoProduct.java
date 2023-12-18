@@ -11,30 +11,27 @@ public interface IRepoProduct extends JpaRepository<Product,Integer> {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-    List<Product> findByProductAvailable(boolean b);
-
-    List<Product> findByProductAvailableAndProductType(boolean b, Type type);
-
-    List<Product> findByProductName(String name);
-
-    List<Product> findByProductPriceLessThanEqualAndProductType( double price,Type type);
-
-
-    List<Product> findByProductTypeOrderByProductPriceDesc(Type type);
-
-    List<Product> findByProductTypeOrderByProductPriceAsc(Type type);
-
-
     List<Product> findProductByOrderEntity(OrderEntity order);
+
+
+    List<Product> findByProductAvailableAndProductName(boolean b, String productName);
+
+
+
+
+
+    List<Product> findFirstProductAvailableByProductType(Type type);
+
+
+    List<Product> findFirstProductAvailableByProductName(String productName);
+
+
+    List<Product> findFirstProductAvailableByProductPriceLessThanEqual(double price);
+
+    List<Product> findFirstProductAvailableByProductTypeOrderByProductPriceDesc(Type type);
+
+    List<Product> findFirstProductAvailableByProductTypeOrderByProductPriceAsc(Type type);
+
+
+    List<Product> findFirstProductAvailableByProductAvailable(boolean b);
 }

@@ -1,13 +1,9 @@
 package com.vikash.mobileCaseBackend.controller;
 
 
-import com.vikash.mobileCaseBackend.model.GuestOrderRequestAndProducts;
-import com.vikash.mobileCaseBackend.model.Product;
-import com.vikash.mobileCaseBackend.model.User;
+import com.vikash.mobileCaseBackend.model.*;
 import com.vikash.mobileCaseBackend.model.enums.Type;
-import com.vikash.mobileCaseBackend.service.OrderEntityService;
-import com.vikash.mobileCaseBackend.service.ProductService;
-import com.vikash.mobileCaseBackend.service.UserService;
+import com.vikash.mobileCaseBackend.service.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -31,6 +27,12 @@ public class UserController {
     @Autowired
     OrderEntityService orderService;
 
+    @Autowired
+    CartService cartService;
+
+    @Autowired
+    GuestCartService guestCartService;
+
 
     // user sign up
     @PostMapping("user/signup")
@@ -41,8 +43,9 @@ public class UserController {
 
     // user sign in
 
-    @PostMapping("user/signIn/{email}/{password}")
-    public String UserSignIn(@PathVariable String email,@PathVariable String password ){
+    // can not be using path variable insted shoyld be sent vi request body
+    @PostMapping("user/signIn")
+    public String UserSignIn(@RequestParam String email,@RequestParam String password ){
         return  userService.UserSignIn(email,password);
     }
 
@@ -53,29 +56,37 @@ public class UserController {
         return userService.userSgnOut(email,token);
     }
 
-    // needs to add functionality that order info is sent via mail to the the one who has placed the order and admin gmail. '
-    // registered user placing order
-    @PostMapping("user/placingOrder/productIds")
-    public String placingOrder(@RequestParam String email, @RequestParam String token
-            , @RequestBody List<Integer> productIds){
-        return orderService.placingOrder(email,token,productIds);
+
+
+    // actually placing order
+    @PostMapping("/finalizeOrder")
+    public String finalizeOrder(@RequestParam String email, @RequestParam String token){
+        return orderService.finalizeOrder(email,token);
     }
 
-    // needs to add functionality that order info is sent via mail to the the one who has placed the order and admin gmail. '
-    // guest user placing order
-    @PostMapping("guest/placingOrder")
-    public String guestCheckout(@RequestBody GuestOrderRequestAndProducts requestAndProducts) {
-            return orderService.processGuestOrder(requestAndProducts);
+    // add product to cart
+    @PostMapping("add/product/toCart")
+    public String addToCart(@RequestParam String email, @RequestParam String token, @RequestParam String productName ) {
+        return cartService.addToCart(email,token,productName);
+
+    }
+
+   // add product to guest cart
+    @PostMapping("add/products/guestCart")
+    public String addToGuestCart( @RequestParam String productName) {
+        return guestCartService.addToGuestCart(productName);
+
     }
 
 
 
-    // get all products
+    //  finalize order guest order
 
-    @GetMapping("products")
-    public List<Product> getAllProducts(){
-        return productService.getAllProductss();
+    @PostMapping("/finalizeGuestOrder/{guestCartId}")
+    public String finalizeGuestOrder(@PathVariable Integer guestCartId, @RequestBody GuestOrderRequest guestOrderRequest) {
+        return orderService.finalizeGuestOrder(guestCartId, guestOrderRequest);
     }
+
 
 
     // get all products available
@@ -84,7 +95,7 @@ public class UserController {
         return productService.allAvailableProducts();
     }
 
-    // get products by type
+    // get products avaiable  by type
     @GetMapping("products/availableBy/type{type}")
     public List<Product> availableByType(@PathVariable Type type){
 
@@ -92,29 +103,28 @@ public class UserController {
     }
 
 
-    // get product by name
+    // get product  availble by name
 
     @GetMapping("product/productName/{name}")
     public  List<Product> getByProductName(@PathVariable String name ){
-        return productService.getByProductName(name);
+        return productService.findProductByName(name);
     }
 
 
 
 
-    // need to add checks that only admin and user that is logged is trycing to acess his own orders and not others.
-    // same logic for deleting a comment in instaBAckend
-    @GetMapping("/user/orderHistory/{userId}")
+    // logged in user order hsitpry
+    @GetMapping("/user/orderHistory")
     public List<Map<String,Object>> getOrderHistoryByUserId(@RequestParam String email, @RequestParam String tokenValue) {
-        return orderService.getOrderHistoryByUserId(email,tokenValue);
+        return orderService.getOrderHistoryByUserEmail(email,tokenValue);
     }
 
 
     // get product by type and below price range
-    @GetMapping("product/type{type}/belowPrice/{price}")
-    public List<Product> availableByTypeAndLessThenEqualPrice( @PathVariable double price,@PathVariable Type type){
+    @GetMapping("product/belowPrice/{price}")
+    public List<Product> availableByTypeAndLessThenEqualPrice( @PathVariable double price){
 
-        return productService.availableAndLessThenEqualPrice(price,type);
+        return productService.availableAndLessThenEqualPrice(price);
     }
 
     // get products sort desc

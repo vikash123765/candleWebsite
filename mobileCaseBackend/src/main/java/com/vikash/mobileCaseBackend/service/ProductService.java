@@ -3,10 +3,14 @@ package com.vikash.mobileCaseBackend.service;
 
 import com.vikash.mobileCaseBackend.model.OrderEntity;
 import com.vikash.mobileCaseBackend.model.Product;
+import com.vikash.mobileCaseBackend.model.User;
 import com.vikash.mobileCaseBackend.model.enums.IncreasOrDeacrease;
 import com.vikash.mobileCaseBackend.model.enums.Type;
 import com.vikash.mobileCaseBackend.repo.IRepoOrder;
 import com.vikash.mobileCaseBackend.repo.IRepoProduct;
+import com.vikash.mobileCaseBackend.repo.IRepoUser;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +27,16 @@ public class ProductService {
 
     @Autowired
     IRepoOrder repoOrder;
+
+    @Autowired
+    IRepoUser iRepoUser;
+
+    private final EntityManager entityManager;
+
+    public ProductService(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
 
     public String addProduct(String email, String tokenValue, Product productPost) {
 
@@ -86,21 +100,19 @@ public class ProductService {
     }
 
 
-    public List<Product> allAvailableProducts() {
-        return repoProduct.findByProductAvailable(true);
-    }
+
+
 
     public List<Product> availableByType(Type type) {
-        return repoProduct.findByProductAvailableAndProductType(true,type);
+        return repoProduct.findFirstProductAvailableByProductType(type);
 
     }
 
-    public List<Product> getByProductName(String name) {
-        return  repoProduct.findByProductName(name);
-    }
 
-    public List<Product> availableAndLessThenEqualPrice(double price,Type type) {
-      return repoProduct.findByProductPriceLessThanEqualAndProductType(price, type);
+
+
+    public List<Product> availableAndLessThenEqualPrice(double price) {
+      return repoProduct.findFirstProductAvailableByProductPriceLessThanEqual(price);
 
     }
 
@@ -108,9 +120,6 @@ public class ProductService {
         return repoProduct.findById(id);
     }
 
-    public List<Product> getAllProductss() {
-        return repoProduct.findAll();
-    }
 
     public List<Product> getProductssById(List<Integer> ids) {
         return repoProduct.findAllById(ids);
@@ -167,31 +176,73 @@ public class ProductService {
     }
 
     public List<Product> sortByPriceDecsAndType(Type type) {
-        return repoProduct.findByProductTypeOrderByProductPriceDesc(type);
+        return repoProduct.findFirstProductAvailableByProductTypeOrderByProductPriceDesc(type);
     }
 
     public List<Product> sortByPriceAscAndType(Type type) {
-        return repoProduct.findByProductTypeOrderByProductPriceAsc(type);
+        return repoProduct.findFirstProductAvailableByProductTypeOrderByProductPriceAsc(type);
     }
 
-    public String removeOrderByOrderNr(String adminEmail, String tokenValue, Integer orderNr) {
+    public String cancelOrderByOrderNr(String adminEmail, String tokenValue, Integer orderNr) {
         if (authenticationService.authenticate(adminEmail, tokenValue)) {
-            OrderEntity order =  repoOrder.findByOrderNumber(orderNr);
+            // Find the actual order via the order number
+            OrderEntity order = repoOrder.findByOrderNumber(orderNr);
 
-            // first we need to remove product that is connected with order nr
-            List<Product> products = repoProduct.findProductByOrderEntity(order);
-            repoProduct.deleteAll(products);
+            if (order != null) {
+                // Unlink the order from the user
+                User user = order.getUser();
+                if (user != null) {
+                    // Set the order reference of associated products to null
+                    List<Product> products = repoProduct.findProductByOrderEntity(order);
+                    for (Product product : products) {
+                        product.setOrderEntity(null);
+                        product.setProductAvailable(true);
+                    }
 
-            repoOrder.delete(order);
+                    order.setUser(null);
+                    iRepoUser.save(user); // Save the user to update the changes in the relationship
+                }
 
+                // Save changes
 
-           return"order with id: " + orderNr + " was removed";
+                repoOrder.delete(order);
 
-
+                return "Order with id: " + orderNr + " was removed.";
+            } else {
+                return "Order not found.";
+            }
         } else {
-            return "Un Authenticated access!!!";
+            return "Unauthenticated access!!!";
         }
+    }
+    public List<Product> findProductByName(String productName) {
+        return  repoProduct.findFirstProductAvailableByProductName(productName);
+    }
 
+    public String markProductAvailable(Integer productId) {
+        Product product = repoProduct.findById(productId).orElseThrow();
+
+        product.setProductAvailable(true);
+
+        repoProduct.save(product);
+
+        return "product with id: " + productId + "was marked as available";
+
+    }
+
+    public String markProductsAvailable(List<Integer> productIds) {
+        List<Product> products = repoProduct.findAllById(productIds);
+
+         for (Product product: products){
+             product.setProductAvailable(true);
+             repoProduct.save(product);
+         }
+        //  repoProduct.saveAll(products);
+         return "products with ids: " + productIds + "was marked as available";
+    }
+
+    public List<Product> allAvailableProducts() {
+        return  repoProduct.findFirstProductAvailableByProductAvailable(true);
     }
 }
 

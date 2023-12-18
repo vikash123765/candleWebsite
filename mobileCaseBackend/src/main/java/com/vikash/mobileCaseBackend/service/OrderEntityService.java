@@ -1,10 +1,8 @@
 
 package com.vikash.mobileCaseBackend.service;
 import com.vikash.mobileCaseBackend.model.*;
-import com.vikash.mobileCaseBackend.repo.IRepoOrder;
-import com.vikash.mobileCaseBackend.repo.IRepoProduct;
-import com.vikash.mobileCaseBackend.repo.IRepoUser;
-import jakarta.transaction.Transactional;
+import com.vikash.mobileCaseBackend.repo.*;
+import com.vikash.mobileCaseBackend.service.EmailUtility.SendMailOrderInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +24,29 @@ public class OrderEntityService {
     @Autowired
     AuthService authenticationService;
 
+
     @Autowired
-    ProductService productService;
+    CartService cartService;
+
+    @Autowired
+    CartItemService cartItemService;
+
+    @Autowired
+    SendMailOrderInfo sendMailOrderInfo;
 
 
 
-    public List<Map<String, Object>> getOrderHistoryByUserId(String email, String tokenValue) {
+    @Autowired
+    IRepoCart repoCart;
+
+    @Autowired
+    IRepoGuestCart iRepoGuestCart;
+    @Autowired
+    IRepoGuestCartItem iRepoGuestCartItem;
+
+
+
+    public List<Map<String, Object>> getOrderHistoryByUserEmail(String email, String tokenValue) {
         if (authenticationService.authenticate(email, tokenValue)) {
 
             // figure out the actual user  with email
@@ -99,24 +114,44 @@ public class OrderEntityService {
     }
 
 
-    public String markOrderAsSent(String email,String tokenValue,Integer orderNr) {
+    public String markOrderAsSent(String email, String tokenValue, Integer orderNr, Integer trackingId) {
         if (authenticationService.authenticate(email, tokenValue)) {
-
             OrderEntity order = repoOrder.findByOrderNumber(orderNr);
-            if(!order.isMarkAsSent()) {
-                order.setMarkAsSent(true);
-                repoOrder.save(order);
-                return "order with  order number : " + orderNr + "is marked as done";
-            }else{
-                return "order already sent";
+
+            // Check if trackingId is provided
+            if (trackingId != null) {
+                order.setTrackingNumber(trackingId);
             }
 
+            if (!order.isMarkAsSent()) {
+                order.setMarkAsSent(true);
+                repoOrder.save(order);
+
+                // Send email notification
+                String subject = "Order Marked as Sent";
+                String body = "Your order with order number " + orderNr + " has been marked as sent.";
+
+                // Include tracking ID in the email body if available
+                if (trackingId != null) {
+                    body += "\nTracking ID: " + trackingId;
+                }
+
+                body += "\nThank you for shopping with us!";
+
+                sendMailOrderInfo.sendEmail(order.getUser().getUserEmail(), subject, body, order);
+
+                // You can also notify the admin if needed
+                // emailService.sendEmail(adminEmail, subject, body, order);
+
+                return "Order with order number: " + orderNr + " is marked as sent";
+            } else {
+                return "Order already sent";
+            }
         } else {
-            return "Un Authenticated access!!!";
+            return "Unauthenticated access!!!";
         }
-
-
     }
+
 
     public String markOrderAsDelivered(String email, String tokenValue,Integer orderNr) {
         if (authenticationService.authenticate(email, tokenValue)) {
@@ -133,80 +168,128 @@ public class OrderEntityService {
         }
 
     }
-    @Transactional
-    public String processGuestOrder(GuestOrderRequestAndProducts requestAndProducts) {
-
-            GuestOrderRequest guestOrderRequest = requestAndProducts.getGuestOrderRequest();
-            List<Integer> productIds = requestAndProducts.getProductIds();
 
 
-
-        // Create a new user
-        User user = new User();
-
-        user.setUserName(guestOrderRequest.getFullName());
-        user.setUserEmail(guestOrderRequest.getEmail());
-        user.setAddress(guestOrderRequest.getShippingAddress());
-        user.setPhoneNumber(guestOrderRequest.getPhoneNumber());
-        // Save the user to the database
-        User savedUser = repoUser.save(user);
-
-        // Create a new order
-        OrderEntity order = new OrderEntity();
-        order.setUser(savedUser);
-
-        // Set other order details and save to the database
-        order.setSetCreatingTimeStamp(LocalDateTime.now());
-        repoOrder.save(order);
-
-
-        // The generated orderNumber is now retrieved
-        Integer generatedOrderNumber = order.getOrderNumber();
-
-        // Associate the order with the products and save the products
-        for (Integer productId : productIds) {
-            Product product = repoProduct.findById(productId).orElseThrow();
-            product.setOrderEntity(order);
-            repoProduct.save(product); // Save each product after associating with the order
-        }
-
-        return  "Order placed successfully!! Order Number: " + generatedOrderNumber;
-
-    }
-
-    public String placingOrder(String email, String token, List<Integer> productIds) {
-
-
+    public String finalizeOrder(String email, String token) {
         if (authenticationService.authenticate(email, token)) {
-            // fins uder with email
             User user = repoUser.findByUserEmail(email);
+            Cart cart = cartService.getCartByUser(user);
+            List<CartItem> cartItems = cart.getCartItems();
 
-            // Create a new object of OrderEntity with the User
+            // Check if the cart has items
+            if (cartItems.isEmpty()) {
+                return "Cart is empty. Cannot finalize order.";
+            }
+
+            // Create and populate an OrderEntity
             OrderEntity order = new OrderEntity();
-            // order.getProduct().setQuantity();
             order.setUser(user);
-
-            // Save the order to generate the orderNumber
             order.setSetCreatingTimeStamp(LocalDateTime.now());
+
+            // Save the order to the database first
             repoOrder.save(order);
 
-            // The generated orderNumber is now retrieved
-            Integer generatedOrderNumber = order.getOrderNumber();
+            // Retrieve the products from the cart items
+            for (CartItem cartItem : cartItems) {
+                Product orderProduct = cartItem.getProduct();
 
-            // Associate the order with the products and save the products
-            for (Integer productId : productIds) {
-                Product product = repoProduct.findById(productId).orElseThrow();
-                product.setOrderEntity(order);
-                repoProduct.save(product); // Save each product after associating with the order
+                // Mark the product as reserved (not available) in the order
+                orderProduct.setReservationTime(LocalDateTime.now());
+
+                // Set the product's orderEntity reference to the saved order
+                orderProduct.setOrderEntity(order);
+
+                // add boolen check if payment is sucessfull or not
+                //respone from paypal
+
+
+                // Save the product to associate it with the new order
+                repoProduct.save(orderProduct);
             }
-            return "Order placed successfully!! Order Number: " + generatedOrderNumber;
 
+            // Optionally mark the cart as having the order placed
+            cart.setOrderPlaced(true);
+            repoCart.save(cart);
+
+            // Reset the user's cart after the order is finalized
+            cartService.resetCart(user);
+
+            // Send email notifications
+            String userSubject = "Order Placed";
+            String userBody = "Your order has been placed. Thank you for shopping with us!";
+            sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
+
+            String adminEmail = "admin@example.com"; // Replace with your actual admin email
+            String adminSubject = "New Order Placed";
+            String adminBody = "A new order has been placed. Order Number: " + order.getOrderNumber();
+            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, order);
+
+            return "Order finalized successfully!";
         } else {
-            return "Un Authenticated access!!!";
+            return "Unauthorized access";
         }
+    }
+    public String finalizeGuestOrder(Integer guestCartId, GuestOrderRequest guestOrderRequest) {
+        // Create a new guest user
+        User guestUser = new User();
+        guestUser.setUserName(guestOrderRequest.getFullName());
+        guestUser.setUserEmail(guestOrderRequest.getEmail());
+        guestUser.setAddress(guestOrderRequest.getShippingAddress());
+        guestUser.setPhoneNumber(guestOrderRequest.getPhoneNumber());
 
+        // Save the guest user to the database
+        User savedGuestUser = repoUser.save(guestUser);
+
+        // Create and populate a GuestOrderEntity
+        OrderEntity guestOrder = new OrderEntity();
+        guestOrder.setUser(savedGuestUser);
+        guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
+        guestOrder.setMarkAsDelivered(false);
+        //guestOrder.setOrderNumber(0); // Set a default value for order number
+        guestOrder.setSetCreatingTimeStamp(LocalDateTime.now());
+        // Save the order to the database
+        repoOrder.save(guestOrder);
+
+        // Retrieve the products from the guest cart items
+        GuestCart guestCart = iRepoGuestCart.findById(guestCartId).orElse(null);
+        if (guestCart != null) {
+            List<GuestCartItem> guestCartItems = guestCart.getGuestCartItems();
+
+            for (GuestCartItem guestCartItem : guestCartItems) {
+                Product orderProduct = guestCartItem.getProduct();
+
+
+                // Save the product to associate it with the new order
+                orderProduct.setOrderEntity(guestOrder);
+                repoProduct.save(orderProduct);
+            }
+
+
+            // Clear the guest cart items
+            guestCartItems.clear();
+            iRepoGuestCartItem.deleteAll(guestCartItems);
+
+            // Send email notifications
+            String userSubject = "Guest Order Placed";
+            String userBody = "Your guest order has been placed. Thank you for shopping with us!";
+            sendMailOrderInfo.sendEmail(savedGuestUser.getUserEmail(), userSubject, userBody, guestOrder);
+
+            String adminEmail = "admin@example.com"; // Replace with your actual admin email
+            String adminSubject = "New Guest Order Placed";
+            String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
+            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
+
+
+            return "Guest order finalized successfully!";
+        } else {
+            return "Guest cart not found. Order finalization failed.";
+        }
     }
 
+
+/*    private boolean checkPaymentStatus() {
+
+    }*/
 }
 
 

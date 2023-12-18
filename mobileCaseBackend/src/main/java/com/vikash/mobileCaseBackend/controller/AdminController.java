@@ -42,8 +42,8 @@ public class AdminController {
 
     // admin sign in
 
-    @PostMapping("admin/signIn/{adminEmail}/{adminPassword}")
-    public String UserSignIn(@PathVariable String adminEmail, @PathVariable String adminPassword ){
+    @PostMapping("admin/signIn")
+    public String UserSignIn(@RequestParam String adminEmail, @RequestParam String adminPassword ){
         return  adminService.adminSignIn(adminEmail,adminPassword);
     }
 
@@ -93,19 +93,19 @@ public class AdminController {
         return productService.removeProductsByIds(adminEmail,tokenValue,ids);
     }
 
-    // delete an order
-    @DeleteMapping("products/{orderNr}")
-    public String removeOrderByOrderNr(@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable  Integer orderNr){
-        return productService.removeOrderByOrderNr(adminEmail,tokenValue,orderNr);
+    // cancel an order
+    @DeleteMapping("order/{orderNr}")
+    public String cancelOrderByOrderNr(@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable  Integer orderNr){
+        return productService.cancelOrderByOrderNr(adminEmail,tokenValue,orderNr);
     }
 
     //mark order as sent
 
-    @PutMapping("order/sent/{orderNr}")
-    String markOrderAsSent (@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable Integer orderNr){
+    @PutMapping("order/sent/{orderNr}/{trackingId}")
+    String markOrderAsSent (@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable Integer orderNr,  @RequestParam(required = false) Integer trackingId){
 
 
-        return orderService.markOrderAsSent(adminEmail,tokenValue,orderNr);
+        return orderService.markOrderAsSent(adminEmail,tokenValue,orderNr,trackingId);
     }
 
     // mark order as delivered
@@ -117,6 +117,18 @@ public class AdminController {
     }
 
 
+    // marlk product as avaiable
+
+    @PostMapping("markAvailable/product/{productId}")
+    String markProductAvailable(@PathVariable Integer productId){
+        return productService.markProductAvailable(productId);
+    }
+
+
+    @PostMapping("markAvailable/productIds")
+    String markProductAvailable(@RequestBody List<Integer> productIds){
+        return productService.markProductsAvailable(productIds);
+    }
 
 
     // put
