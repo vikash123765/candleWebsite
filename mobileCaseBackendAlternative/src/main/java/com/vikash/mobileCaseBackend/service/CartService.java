@@ -35,22 +35,6 @@ public class CartService {
 
 
 
-    public void releaseExpiredReservations(Cart userCart) {
-        LocalDateTime currentTime = LocalDateTime.now();
-
-        // Iterate through cart items and release reservations for expired products
-        List<CartItem> cartItems = userCart.getCartItems();
-        for (CartItem cartItem : cartItems) {
-            Product product = cartItem.getProduct();
-            if (product.getReservationTime() != null && product.getReservationTime().plusMinutes(30).isBefore(currentTime)) {
-                // Release the reservation
-                product.setReservationTime(null);
-            }
-        }
-
-        // Save the updated products
-        repoProduct.saveAll(cartItems.stream().map(CartItem::getProduct).collect(Collectors.toList()));
-    }
 
 
 
@@ -96,16 +80,13 @@ public class CartService {
                     cartItem.setCart(userCart);
                     cartItems.add(cartItem);
 
-                    // Mark the product as unavailable when added to the cart
-                    productToAdd.setProductAvailable(false);
-                    productToAdd.setReservationTime(LocalDateTime.now());
+
                 }
 
                 // Save the user's cart (this cascades to cart items)
                 repoCart.save(userCart);
 
-                // Release expired reservations after adding the product
-                releaseExpiredReservations(userCart);
+
 
                 return "Product added to the cart successfully.";
             } else {

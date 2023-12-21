@@ -3,6 +3,7 @@ package com.vikash.mobileCaseBackend.service;
 
 import com.vikash.mobileCaseBackend.model.Admin;
 import com.vikash.mobileCaseBackend.model.AuthenticationToken;
+import com.vikash.mobileCaseBackend.model.Product;
 import com.vikash.mobileCaseBackend.repo.IRepoAdmin;
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
 import com.vikash.mobileCaseBackend.service.HashingUtility.PasswordEncryptor;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 @Service
 public class AdminService {
@@ -19,7 +21,8 @@ public class AdminService {
     @Autowired
     IRepoAdmin repoAdmin;
 
-
+   @Autowired
+   ProductService productService;
 
     public String adminSgnOut(String email, String token) {
 
@@ -97,5 +100,9 @@ public class AdminService {
 
 
         }
+
+    public List<Product> getProductssById(List<Integer> ids) {
+        return productService.getProductssById(ids);
     }
+}
 

@@ -9,8 +9,6 @@ import com.vikash.mobileCaseBackend.model.enums.Type;
 import com.vikash.mobileCaseBackend.repo.IRepoOrder;
 import com.vikash.mobileCaseBackend.repo.IRepoProduct;
 import com.vikash.mobileCaseBackend.repo.IRepoUser;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,11 +29,6 @@ public class ProductService {
     @Autowired
     IRepoUser iRepoUser;
 
-    private final EntityManager entityManager;
-
-    public ProductService(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
 
 
     public String addProduct(String email, String tokenValue, Product productPost) {
@@ -104,7 +97,7 @@ public class ProductService {
 
 
     public List<Product> availableByType(Type type) {
-        return repoProduct.findFirstProductAvailableByProductType(type);
+        return repoProduct.findProductAvailableByProductType(type);
 
     }
 
@@ -112,7 +105,7 @@ public class ProductService {
 
 
     public List<Product> availableAndLessThenEqualPrice(double price) {
-      return repoProduct.findFirstProductAvailableByProductPriceLessThanEqual(price);
+      return repoProduct.findProductAvailableByProductPriceLessThanEqual(price);
 
     }
 
@@ -176,11 +169,11 @@ public class ProductService {
     }
 
     public List<Product> sortByPriceDecsAndType(Type type) {
-        return repoProduct.findFirstProductAvailableByProductTypeOrderByProductPriceDesc(type);
+        return repoProduct.findProductAvailableByProductTypeOrderByProductPriceDesc(type);
     }
 
     public List<Product> sortByPriceAscAndType(Type type) {
-        return repoProduct.findFirstProductAvailableByProductTypeOrderByProductPriceAsc(type);
+        return repoProduct.findProductAvailableByProductTypeOrderByProductPriceAsc(type);
     }
 
     public String cancelOrderByOrderNr(String adminEmail, String tokenValue, Integer orderNr) {
@@ -193,9 +186,9 @@ public class ProductService {
                 User user = order.getUser();
                 if (user != null) {
                     // Set the order reference of associated products to null
-                    List<Product> products = repoProduct.findProductByOrderEntity(order);
+                    List<Product> products = repoProduct.findProductByOrders(order);
                     for (Product product : products) {
-                        product.setOrderEntity(null);
+                        product.setOrders(null);
                         product.setProductAvailable(true);
                     }
 
@@ -216,19 +209,33 @@ public class ProductService {
         }
     }
     public List<Product> findProductByName(String productName) {
-        return  repoProduct.findFirstProductAvailableByProductName(productName);
+        return  repoProduct.findProductAvailableByProductName(productName);
     }
 
-    public String markProductAvailable(Integer productId) {
-        Product product = repoProduct.findById(productId).orElseThrow();
+    public String markProductAvailable(String adminEmail, String tokenValue,Integer productId) {
+        if (authenticationService.authenticate(adminEmail, tokenValue)) {
 
-        product.setProductAvailable(true);
+            Product product = repoProduct.findById(productId).orElseThrow();
 
-        repoProduct.save(product);
+            product.setProductAvailable(true);
 
-        return "product with id: " + productId + "was marked as available";
+            repoProduct.save(product);
+
+            return "product with id: " + productId + "was marked as available";
+
+
+
+
+        } else {
+            return "Un Authenticated access!!!";
+        }
+
 
     }
+
+
+
+
 
     public String markProductsAvailable(List<Integer> productIds) {
         List<Product> products = repoProduct.findAllById(productIds);
@@ -242,8 +249,34 @@ public class ProductService {
     }
 
     public List<Product> allAvailableProducts() {
-        return  repoProduct.findFirstProductAvailableByProductAvailable(true);
+        return  repoProduct.findByProductAvailable(true);
     }
+
+
+
+    public String markProductUnAvailable(Integer productId) {
+
+        Product product = repoProduct.findById(productId).orElseThrow();
+
+        product.setProductAvailable(false);
+
+        repoProduct.save(product);
+
+        return "product with id: " + productId + "was marked as unavailable";
+
+    }
+
+    public String markProductsUnAvailable(List<Integer> productIds) {
+            List<Product> products = repoProduct.findAllById(productIds);
+
+            for (Product product: products){
+                product.setProductAvailable(true);
+                repoProduct.save(product);
+            }
+            //  repoProduct.saveAll(products);
+            return "products with ids: " + productIds + "was marked as unavailable";
+        }
+
 }
 
 

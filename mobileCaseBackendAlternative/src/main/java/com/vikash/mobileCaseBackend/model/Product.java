@@ -25,12 +25,8 @@ public class Product {
     private String productDescription;
     //private  Integer quantity;
     private boolean productAvailable;
-
     @Column(name="price")
     private double productPrice;
-
-    @Column(name = "reservation_time")
-    private LocalDateTime reservationTime;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> cartItems = new ArrayList<>();
@@ -38,10 +34,22 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GuestCartItem> GuestCartItems = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "fk_order_id")
-    private OrderEntity orderEntity;
 
 
+    @ManyToMany
+    @JoinTable(
+            name = "product_order",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "order_id")
+    )
+    private List<OrderEntity> orders = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_product",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> users = new ArrayList<>();
 
 }

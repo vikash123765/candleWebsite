@@ -18,8 +18,6 @@ public class GuestCartService {
     @Autowired
     IRepoGuestCart iRepoGuestCart;
 
-    @Autowired
-    ProductService productService;
 
     @Autowired
     IRepoGuestCartItem iRepoGuestCartItem;
@@ -27,7 +25,7 @@ public class GuestCartService {
     @Autowired
     IRepoProduct repoProduct;
 
-    private static final int RESERVATION_EXPIRATION_MINUTES = 30;
+
 
     public String addToGuestCart(String productName) {
         // Fetch the products based on the provided product name and availability
@@ -65,12 +63,7 @@ public class GuestCartService {
             guestCartItem.setGuestCart(guestCart);
             guestCartItems.add(guestCartItem);
 
-            // Mark the product as unavailable when added to the guest cart
-            productToAdd.setProductAvailable(false);
 
-
-            // Release expired reservations after adding the product
-            releaseExpiredReservations(guestCart);
         }
 
         // Save the guest cart (this cascades to guest cart items)
@@ -90,11 +83,8 @@ public class GuestCartService {
         if (guestCartItemOptional.isPresent()) {
             GuestCartItem guestCartItem = guestCartItemOptional.get();
 
-            // Mark the product as available again
-            guestCartItem.getProduct().setProductAvailable(true);
-
             // Remove the guest cart item
-            iRepoGuestCartItem.deleteById(guestCartItemId);
+            iRepoGuestCartItem.delete(guestCartItem);
 
             return "Product removed from guest cart successfully.";
         } else {
@@ -102,28 +92,5 @@ public class GuestCartService {
         }
     }
 
-    private void releaseExpiredReservations(GuestCart guestCart) {
-        LocalDateTime currentTime = LocalDateTime.now();
 
-        Iterator<GuestCartItem> iterator = guestCart.getGuestCartItems().iterator();
-        while (iterator.hasNext()) {
-            GuestCartItem guestCartItem = iterator.next();
-
-            LocalDateTime reservationTime = guestCartItem.getProduct().getReservationTime();
-
-            // Check if reservationTime is not null before calculating the duration
-            if (reservationTime != null) {
-                if (Duration.between(reservationTime, currentTime).toMinutes() > RESERVATION_EXPIRATION_MINUTES) {
-                    // Mark the product as available again
-                    guestCartItem.getProduct().setProductAvailable(true);
-
-                    // Remove the expired item from the guest cart
-                    iterator.remove();
-                }
-            } else {
-                // Handle the case where reservationTime is null (optional)
-                // You may want to log a message or take other appropriate action
-            }
-        }
-    }
 }

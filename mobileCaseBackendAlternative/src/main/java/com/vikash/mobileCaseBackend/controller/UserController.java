@@ -82,10 +82,12 @@ public class UserController {
 
     //  finalize order guest order
 
+
     @PostMapping("/finalizeGuestOrder/{guestCartId}")
     public String finalizeGuestOrder(@PathVariable Integer guestCartId, @RequestBody GuestOrderRequest guestOrderRequest) {
         return orderService.finalizeGuestOrder(guestCartId, guestOrderRequest);
     }
+
 
 
 
@@ -114,10 +116,12 @@ public class UserController {
 
 
     // logged in user order hsitpry
+
     @GetMapping("/user/orderHistory")
     public List<Map<String,Object>> getOrderHistoryByUserId(@RequestParam String email, @RequestParam String tokenValue) {
         return orderService.getOrderHistoryByUserEmail(email,tokenValue);
     }
+
 
 
     // get product by type and below price range

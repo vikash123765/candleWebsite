@@ -28,8 +28,6 @@ public class OrderEntityService {
     @Autowired
     CartService cartService;
 
-    @Autowired
-    CartItemService cartItemService;
 
     @Autowired
     SendMailOrderInfo sendMailOrderInfo;
@@ -70,7 +68,7 @@ public class OrderEntityService {
                     // orderMap.put("sent", order.());
 
                     // Fetch products associated with the order via repository query
-                    List<Product> products = repoProduct.findProductByOrderEntity(order);
+                    List<Product> products = repoProduct.findProductByOrders(order);
                     List<Map<String, Object>> productDetails = new ArrayList<>();
 
                     for (Product product : products) {
@@ -114,8 +112,10 @@ public class OrderEntityService {
     }
 
 
+
     public String markOrderAsSent(String email, String tokenValue, Integer orderNr, Integer trackingId) {
         if (authenticationService.authenticate(email, tokenValue)) {
+
             OrderEntity order = repoOrder.findByOrderNumber(orderNr);
 
             // Check if trackingId is provided
@@ -140,8 +140,11 @@ public class OrderEntityService {
 
                 sendMailOrderInfo.sendEmail(order.getUser().getUserEmail(), subject, body, order);
 
+
+
                 // You can also notify the admin if needed
-                // emailService.sendEmail(adminEmail, subject, body, order);
+                String adminEmail="vikash.kosaraju1234@gmail.com";
+                sendMailOrderInfo.sendEmail(adminEmail, subject, body, order);
 
                 return "Order with order number: " + orderNr + " is marked as sent";
             } else {
@@ -155,14 +158,14 @@ public class OrderEntityService {
 
     public String markOrderAsDelivered(String email, String tokenValue,Integer orderNr) {
         if (authenticationService.authenticate(email, tokenValue)) {
-        OrderEntity order = repoOrder.findByOrderNumber(orderNr);
-        if(!order.isMarkAsDelivered()){
-            order.setMarkAsDelivered(true);
-            repoOrder.save(order);
-            return "order with  order number : " + orderNr + "is marked as done";
-        }else{
-            return "order already sent";
-        }
+            OrderEntity order = repoOrder.findByOrderNumber(orderNr);
+            if(!order.isMarkAsDelivered()){
+                order.setMarkAsDelivered(true);
+                repoOrder.save(order);
+                return "order with  order number : " + orderNr + "is marked as done";
+            }else{
+                return "order already sent";
+            }
         } else {
             return "Un Authenticated access!!!";
         }
@@ -189,23 +192,24 @@ public class OrderEntityService {
             // Save the order to the database first
             repoOrder.save(order);
 
+            // Create a separate list to collect products
+            List<Product> productsToUpdate = new ArrayList<>();
+
             // Retrieve the products from the cart items
             for (CartItem cartItem : cartItems) {
                 Product orderProduct = cartItem.getProduct();
 
-                // Mark the product as reserved (not available) in the order
-                orderProduct.setReservationTime(LocalDateTime.now());
-
                 // Set the product's orderEntity reference to the saved order
-                orderProduct.setOrderEntity(order);
-
-                // add boolen check if payment is sucessfull or not
-                //respone from paypal
-
-
-                // Save the product to associate it with the new order
-                repoProduct.save(orderProduct);
+                orderProduct.getOrders().add(order);
+                productsToUpdate.add(orderProduct);
             }
+
+            // Save all products after modifying relationships
+            repoProduct.saveAll(productsToUpdate);
+
+            // Update the user's orders outside the loop
+            user.getOrders().add(order);
+            repoUser.save(user);
 
             // Optionally mark the cart as having the order placed
             cart.setOrderPlaced(true);
@@ -219,7 +223,7 @@ public class OrderEntityService {
             String userBody = "Your order has been placed. Thank you for shopping with us!";
             sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
 
-            String adminEmail = "admin@example.com"; // Replace with your actual admin email
+            String adminEmail = "vikash.kosaraju1234@gmail.com"; // Replace with your actual admin email
             String adminSubject = "New Order Placed";
             String adminBody = "A new order has been placed. Order Number: " + order.getOrderNumber();
             sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, order);
@@ -229,6 +233,9 @@ public class OrderEntityService {
             return "Unauthorized access";
         }
     }
+
+
+
     public String finalizeGuestOrder(Integer guestCartId, GuestOrderRequest guestOrderRequest) {
         // Create a new guest user
         User guestUser = new User();
@@ -242,11 +249,13 @@ public class OrderEntityService {
 
         // Create and populate a GuestOrderEntity
         OrderEntity guestOrder = new OrderEntity();
-        guestOrder.setUser(savedGuestUser);
         guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
         guestOrder.setMarkAsDelivered(false);
-        //guestOrder.setOrderNumber(0); // Set a default value for order number
         guestOrder.setSetCreatingTimeStamp(LocalDateTime.now());
+
+        // Link the guest order with the guest user
+        guestOrder.setUser(savedGuestUser);
+
         // Save the order to the database
         repoOrder.save(guestOrder);
 
@@ -258,12 +267,18 @@ public class OrderEntityService {
             for (GuestCartItem guestCartItem : guestCartItems) {
                 Product orderProduct = guestCartItem.getProduct();
 
+                // Link the product with the guest order
+                orderProduct.getOrders().add(guestOrder);
+                // Link the product with the guest user
+                orderProduct.getUsers().add(savedGuestUser);
 
                 // Save the product to associate it with the new order
-                orderProduct.setOrderEntity(guestOrder);
                 repoProduct.save(orderProduct);
             }
 
+            // Link the guest order with the guest user's orders
+            savedGuestUser.getOrders().add(guestOrder);
+            repoUser.save(savedGuestUser);
 
             // Clear the guest cart items
             guestCartItems.clear();
@@ -279,12 +294,12 @@ public class OrderEntityService {
             String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
             sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
 
-
             return "Guest order finalized successfully!";
         } else {
             return "Guest cart not found. Order finalization failed.";
         }
     }
+
 
 
 /*    private boolean checkPaymentStatus() {

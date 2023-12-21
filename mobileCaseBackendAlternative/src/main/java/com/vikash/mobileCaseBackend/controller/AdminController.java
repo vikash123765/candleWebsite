@@ -57,7 +57,7 @@ public class AdminController {
 
     @GetMapping("products/ids")
     public List<Product> getProductsByIds(@RequestBody List<Integer> ids){
-        return  productService.getProductssById(ids);
+        return  adminService.getProductssById(ids);
     }
 
 
@@ -117,17 +117,31 @@ public class AdminController {
     }
 
 
+
+
     // marlk product as avaiable
 
     @PostMapping("markAvailable/product/{productId}")
-    String markProductAvailable(@PathVariable Integer productId){
-        return productService.markProductAvailable(productId);
+    String markProductAvailable(@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable Integer productId){
+        return productService.markProductAvailable(adminEmail,tokenValue,productId);
+    }
+
+    // marlk product as avaiable
+
+    @PostMapping("markUnAvailable/product/{productId}")
+    String markProductUnAvailable(@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable Integer productId){
+        return productService.markProductUnAvailable(adminEmail,tokenValue,productId);
     }
 
 
     @PostMapping("markAvailable/productIds")
     String markProductAvailable(@RequestBody List<Integer> productIds){
         return productService.markProductsAvailable(productIds);
+    }
+
+    @PostMapping("markUnAvailable/productIds")
+    String markProductsUnAvailable(@RequestBody List<Integer> productIds){
+        return productService.markProductsUnAvailable(productIds);
     }
 
 
