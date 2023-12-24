@@ -215,6 +215,8 @@ public class OrderEntityService {
             cart.setOrderPlaced(true);
             repoCart.save(cart);
 
+            // booleam check
+
             // Reset the user's cart after the order is finalized
             cartService.resetCart(user);
 
@@ -236,10 +238,10 @@ public class OrderEntityService {
 
 
 
-    public String finalizeGuestOrder(Integer guestCartId, GuestOrderRequest guestOrderRequest) {
+    public String finalizeGuestOrder( GuestOrderRequest guestOrderRequest) {
         // Create a new guest user
         User guestUser = new User();
-        guestUser.setUserName(guestOrderRequest.getFullName());
+        guestUser.setUserName(guestOrderRequest.getUserName());
         guestUser.setUserEmail(guestOrderRequest.getEmail());
         guestUser.setAddress(guestOrderRequest.getShippingAddress());
         guestUser.setPhoneNumber(guestOrderRequest.getPhoneNumber());
@@ -260,7 +262,10 @@ public class OrderEntityService {
         repoOrder.save(guestOrder);
 
         // Retrieve the products from the guest cart items
-        GuestCart guestCart = iRepoGuestCart.findById(guestCartId).orElse(null);
+       // GuestCart guestCart = iRepoGuestCart.findById(guestCartId).orElse(null);
+        // Generate or fetch session token internally (pseudo code, you'll need to implement this)
+        String sessionToken = generateOrFetchSessionToken(savedGuestUser);
+        GuestCart guestCart = iRepoGuestCart.findBySessionToken(sessionToken);
         if (guestCart != null) {
             List<GuestCartItem> guestCartItems = guestCart.getGuestCartItems();
 
@@ -300,7 +305,41 @@ public class OrderEntityService {
         }
     }
 
+    private String generateOrFetchSessionToken(User savedGuestUser) {
+        // Assuming you have a method to get the session token from the user or some other source
+        String sessionToken = generateSessionTokenForUser(savedGuestUser); // Implement this method as needed
 
+        // Check if a guest cart with this session token already exists
+        GuestCart existingGuestCart = iRepoGuestCart.findBySessionToken(sessionToken);
+
+        if (existingGuestCart != null) {
+            // If a session token already exists, return it
+            return existingGuestCart.getSessionToken();
+        } else {
+            // Generate a new session token using UUID
+            String newSessionToken = UUID.randomUUID().toString();
+
+            // Create a new GuestCart entity
+            GuestCart newGuestCart = new GuestCart();
+            newGuestCart.setSessionToken(newSessionToken);
+            newGuestCart.setOrderPlaced(false); // Assuming this is the default state
+
+            // Link the guest user with the guest cart
+            newGuestCart.getUsers().add(savedGuestUser);  // Ensure the method exists to add user to guest cart
+
+            // Save the GuestCart to associate the session token with the guest user
+            iRepoGuestCart.save(newGuestCart);
+
+            return newSessionToken;
+        }
+    }
+
+    private String generateSessionTokenForUser(User savedGuestUser) {
+        // Generate a unique session token using UUID
+        return UUID.randomUUID().toString();
+    }
+    
+       
 
 /*    private boolean checkPaymentStatus() {
 

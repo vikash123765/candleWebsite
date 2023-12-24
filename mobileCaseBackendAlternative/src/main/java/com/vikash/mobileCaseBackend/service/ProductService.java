@@ -237,15 +237,25 @@ public class ProductService {
 
 
 
-    public String markProductsAvailable(List<Integer> productIds) {
-        List<Product> products = repoProduct.findAllById(productIds);
+    public String markProductsAvailable(String adminEmail, String tokenValue,List<Integer> productIds) {
+        if (authenticationService.authenticate(adminEmail, tokenValue)) {
 
-         for (Product product: products){
-             product.setProductAvailable(true);
-             repoProduct.save(product);
-         }
-        //  repoProduct.saveAll(products);
-         return "products with ids: " + productIds + "was marked as available";
+            List<Product> products = repoProduct.findAllById(productIds);
+
+            for (Product product: products){
+                product.setProductAvailable(true);
+                repoProduct.save(product);
+            }
+            //  repoProduct.saveAll(products);
+            return "products with ids: " + productIds + "was marked as available";
+
+
+
+
+        } else {
+            return "Un Authenticated access!!!";
+        }
+
     }
 
     public List<Product> allAvailableProducts() {
@@ -254,28 +264,44 @@ public class ProductService {
 
 
 
-    public String markProductUnAvailable(Integer productId) {
+    public String markProductUnAvailable(String adminEmail, String tokenValue,Integer productId) {
+        if (authenticationService.authenticate(adminEmail, tokenValue)) {
 
-        Product product = repoProduct.findById(productId).orElseThrow();
+            Product product = repoProduct.findById(productId).orElseThrow();
 
-        product.setProductAvailable(false);
+            product.setProductAvailable(false);
 
-        repoProduct.save(product);
+            repoProduct.save(product);
 
-        return "product with id: " + productId + "was marked as unavailable";
+            return "product with id: " + productId + "was marked as unavailable";
+
+
+        } else {
+            return "Un Authenticated access!!!";
+        }
+
+
 
     }
 
-    public String markProductsUnAvailable(List<Integer> productIds) {
+    public String markProductsUnAvailable(String adminEmail, String tokenValue,List<Integer> productIds) {
+        if (authenticationService.authenticate(adminEmail, tokenValue)) {
+
             List<Product> products = repoProduct.findAllById(productIds);
 
-            for (Product product: products){
+            for (Product product : products) {
                 product.setProductAvailable(true);
                 repoProduct.save(product);
             }
             //  repoProduct.saveAll(products);
             return "products with ids: " + productIds + "was marked as unavailable";
+
+        } else {
+            return "Un Authenticated access!!!";
         }
+
+
+    }
 
 }
 

@@ -3,6 +3,8 @@ package com.vikash.mobileCaseBackend.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vikash.mobileCaseBackend.model.enums.Type;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -37,6 +39,7 @@ public class Product {
 
 
     @ManyToMany
+    @JsonIgnore
     @JoinTable(
             name = "product_order",
             joinColumns = @JoinColumn(name = "product_id"),
@@ -45,6 +48,7 @@ public class Product {
     private List<OrderEntity> orders = new ArrayList<>();
 
     @ManyToMany
+    @JsonIgnore
     @JoinTable(
             name = "user_product",
             joinColumns = @JoinColumn(name = "product_id"),

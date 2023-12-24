@@ -19,8 +19,12 @@ public class GuestCart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer guestCartId;
-
+    private String sessionToken;
     private boolean orderPlaced;
+
+    @ManyToMany(mappedBy = "guestCarts")
+    private List<User> users = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "guestCart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GuestCartItem> guestCartItems = new ArrayList<>();

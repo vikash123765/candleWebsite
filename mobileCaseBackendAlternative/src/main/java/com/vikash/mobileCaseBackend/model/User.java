@@ -52,4 +52,16 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     private List<Product> products = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_guestcart",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "guestcart_id")
+    )
+    private List<GuestCart> guestCarts = new ArrayList<>();
+
+
+
+
 }

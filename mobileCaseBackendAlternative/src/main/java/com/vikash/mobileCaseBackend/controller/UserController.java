@@ -84,8 +84,8 @@ public class UserController {
 
 
     @PostMapping("/finalizeGuestOrder/{guestCartId}")
-    public String finalizeGuestOrder(@PathVariable Integer guestCartId, @RequestBody GuestOrderRequest guestOrderRequest) {
-        return orderService.finalizeGuestOrder(guestCartId, guestOrderRequest);
+    public String finalizeGuestOrder( @RequestBody GuestOrderRequest guestOrderRequest) {
+        return orderService.finalizeGuestOrder(guestOrderRequest);
     }
 
 

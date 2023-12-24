@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class GuestOrderRequest {
 
-    private String FullName;
+    private String userName;
     private String shippingAddress;
     private String email;
 

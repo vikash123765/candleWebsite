@@ -135,13 +135,14 @@ public class AdminController {
 
 
     @PostMapping("markAvailable/productIds")
-    String markProductAvailable(@RequestBody List<Integer> productIds){
-        return productService.markProductsAvailable(productIds);
+    String markProductAvailable(@RequestParam String adminEmail, @RequestParam String tokenValue,@RequestBody List<Integer> productIds){
+        return productService.markProductsAvailable(adminEmail,tokenValue,productIds);
     }
 
+
     @PostMapping("markUnAvailable/productIds")
-    String markProductsUnAvailable(@RequestBody List<Integer> productIds){
-        return productService.markProductsUnAvailable(productIds);
+    String markProductsUnAvailable(@RequestParam String adminEmail, @RequestParam String tokenValue,@RequestBody List<Integer> productIds){
+        return productService.markProductsUnAvailable(adminEmail,tokenValue,productIds);
     }
 
 

@@ -27,7 +27,7 @@ public class SendMailOrderInfo {
 
     public void sendEmail(String to, String subject, String body, OrderEntity order) {
         final String username = "vikash.kosaraju1234@gmail.com";
-        final String password = "llhb pfzy jdfa krpo"; // Use your App Password if 2FA is enabled
+        final String password = "unxc fynj sibq mktz"; // Use your App Password if 2FA is enabled
 
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");

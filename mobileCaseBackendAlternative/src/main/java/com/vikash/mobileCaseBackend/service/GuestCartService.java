@@ -1,6 +1,7 @@
 package com.vikash.mobileCaseBackend.service;
 import com.vikash.mobileCaseBackend.model.*;
 import com.vikash.mobileCaseBackend.repo.*;
+import com.vikash.mobileCaseBackend.utils.GuestSessionTokenGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,9 @@ public class GuestCartService {
         GuestCart guestCart = iRepoGuestCart.findById(1).orElse(null);
         if (guestCart == null) {
             // If the guest cart doesn't exist, create a new one
+            String sessionToken = GuestSessionTokenGenerator.generateSessionToken();
             guestCart = new GuestCart();
+            guestCart.setSessionToken(sessionToken);
             iRepoGuestCart.save(guestCart);
         }
 
