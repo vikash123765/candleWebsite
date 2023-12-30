@@ -45,14 +45,13 @@ public class UserController {
 
     // can not be using path variable insted shoyld be sent vi request body
     @PostMapping("user/signIn")
-    public String UserSignIn(@RequestParam String email,@RequestParam String password ){
+    public String UserSignIn(@RequestHeader("email") String email, @RequestHeader("password") String password ){
         return  userService.UserSignIn(email,password);
     }
-
     // user sign out
 
     @DeleteMapping("user/signOut")
-    public String userSgnOut(@RequestParam String email,@RequestParam String token ){
+    public String userSgnOut(@RequestHeader("email") String email, @RequestHeader("x-auth-token") String token ){
         return userService.userSgnOut(email,token);
     }
 
@@ -60,13 +59,15 @@ public class UserController {
 
     // actually placing order
     @PostMapping("/finalizeOrder")
-    public String finalizeOrder(@RequestParam String email, @RequestParam String token){
-        return orderService.finalizeOrder(email,token);
+    public String finalizeOrder(@RequestHeader("email") String email, @RequestHeader("x-auth-token") String token) {
+        // Validate the token and process the order
+        return orderService.finalizeOrder(email, token);
     }
+
 
     // add product to cart
     @PostMapping("add/product/toCart")
-    public String addToCart(@RequestParam String email, @RequestParam String token, @RequestParam String productName ) {
+    public String addToCart(@RequestHeader("email") String email, @RequestHeader("x-auth-token") String token, @RequestParam String productName) {
         return cartService.addToCart(email,token,productName);
 
     }
@@ -83,7 +84,7 @@ public class UserController {
     //  finalize order guest order
 
 
-    @PostMapping("/finalizeGuestOrder/{guestCartId}")
+    @PostMapping("/finalizeGuestOrder")
     public String finalizeGuestOrder( @RequestBody GuestOrderRequest guestOrderRequest) {
         return orderService.finalizeGuestOrder(guestOrderRequest);
     }
@@ -118,7 +119,7 @@ public class UserController {
     // logged in user order hsitpry
 
     @GetMapping("/user/orderHistory")
-    public List<Map<String,Object>> getOrderHistoryByUserId(@RequestParam String email, @RequestParam String tokenValue) {
+    public List<Map<String,Object>> getOrderHistoryByUserId(@RequestHeader("email") String email, @RequestHeader("x-auth-token") String tokenValue) {
         return orderService.getOrderHistoryByUserEmail(email,tokenValue);
     }
 

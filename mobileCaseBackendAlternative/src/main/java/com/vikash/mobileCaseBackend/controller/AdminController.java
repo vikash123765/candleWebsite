@@ -11,8 +11,9 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
+import io.swagger.annotations.ApiParam;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Validated
@@ -43,21 +44,24 @@ public class AdminController {
     // admin sign in
 
     @PostMapping("admin/signIn")
-    public String UserSignIn(@RequestParam String adminEmail, @RequestParam String adminPassword ){
-        return  adminService.adminSignIn(adminEmail,adminPassword);
+    public String adminSignIn(@RequestHeader("email") String adminEmail, @RequestHeader("password") String adminPassword ){
+
+        return adminService.adminSignIn(adminEmail, adminPassword);
     }
 
+
     @DeleteMapping("admin/signOut")
-    public String adminSgnOut(@RequestParam String adminEmail,@RequestParam String token ){
+    public String adminSgnOut(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String token){
+
         return adminService.adminSgnOut(adminEmail,token);
     }
 
     //get  products based on ids
 
 
-    @GetMapping("products/ids")
+    @PostMapping("products/ids")
     public List<Product> getProductsByIds(@RequestBody List<Integer> ids){
-        return  adminService.getProductssById(ids);
+        return  adminService.getProductsById(ids);
     }
 
 
@@ -70,39 +74,39 @@ public class AdminController {
 
     // post
     @PostMapping("product")
-    public String addProduct(@RequestParam String adminEmail, @RequestParam String tokenValue, @RequestBody Product productPost){
+    public String addProduct(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue,  @RequestBody Product productPost){
         return productService.addProduct(adminEmail,tokenValue,productPost);
     }
     @PostMapping("products")
-    public String addProducts(@RequestParam String adminEmail, @RequestParam String tokenValue, @RequestBody List<Product> newProducts){
+    public String addProducts(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue,  @RequestBody List<Product> newProducts){
         return productService.addProducts(adminEmail,tokenValue,newProducts);
     }
 
     // delete
     @DeleteMapping("product/{productId}")
-    public String deletePost(@RequestParam String adminEmail, @RequestParam String tokenValue, @PathVariable Integer postId){
+    public String deletePost(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue,  @PathVariable Integer postId){
         return productService.deleteProduct(adminEmail,tokenValue,postId);
     }
     @DeleteMapping("products")
-    public String removeAllProducts(@RequestParam String adminEmail, @RequestParam String tokenValue){
+    public String removeAllProducts(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue){
         return productService.removeAllProducts(adminEmail,tokenValue);
     }
 
     @DeleteMapping("products/ids")
-    public String removeProductsByIds(@RequestParam String adminEmail, @RequestParam String tokenValue,@RequestBody List<Integer> ids){
+    public String removeProductsByIds(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @RequestBody List<Integer> ids){
         return productService.removeProductsByIds(adminEmail,tokenValue,ids);
     }
 
     // cancel an order
     @DeleteMapping("order/{orderNr}")
-    public String cancelOrderByOrderNr(@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable  Integer orderNr){
+    public String cancelOrderByOrderNr(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable  Integer orderNr){
         return productService.cancelOrderByOrderNr(adminEmail,tokenValue,orderNr);
     }
 
     //mark order as sent
 
     @PutMapping("order/sent/{orderNr}/{trackingId}")
-    String markOrderAsSent (@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable Integer orderNr,  @RequestParam(required = false) Integer trackingId){
+    String markOrderAsSent (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr,  @RequestParam(required = false) Integer trackingId){
 
 
         return orderService.markOrderAsSent(adminEmail,tokenValue,orderNr,trackingId);
@@ -110,7 +114,7 @@ public class AdminController {
 
     // mark order as delivered
     @PutMapping("order/delivered/{orderNr}")
-    String markOrderAsDelivered (@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable Integer orderNr){
+    String markOrderAsDelivered (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr){
 
 
         return orderService.markOrderAsDelivered(adminEmail,tokenValue,orderNr);
@@ -122,26 +126,26 @@ public class AdminController {
     // marlk product as avaiable
 
     @PostMapping("markAvailable/product/{productId}")
-    String markProductAvailable(@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable Integer productId){
+    String markProductAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer productId){
         return productService.markProductAvailable(adminEmail,tokenValue,productId);
     }
 
     // marlk product as avaiable
 
     @PostMapping("markUnAvailable/product/{productId}")
-    String markProductUnAvailable(@RequestParam String adminEmail, @RequestParam String tokenValue,@PathVariable Integer productId){
+    String markProductUnAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer productId){
         return productService.markProductUnAvailable(adminEmail,tokenValue,productId);
     }
 
 
     @PostMapping("markAvailable/productIds")
-    String markProductAvailable(@RequestParam String adminEmail, @RequestParam String tokenValue,@RequestBody List<Integer> productIds){
+    String markProductAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue,@RequestBody List<Integer> productIds){
         return productService.markProductsAvailable(adminEmail,tokenValue,productIds);
     }
 
 
     @PostMapping("markUnAvailable/productIds")
-    String markProductsUnAvailable(@RequestParam String adminEmail, @RequestParam String tokenValue,@RequestBody List<Integer> productIds){
+    String markProductsUnAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @RequestBody List<Integer> productIds){
         return productService.markProductsUnAvailable(adminEmail,tokenValue,productIds);
     }
 
@@ -149,14 +153,14 @@ public class AdminController {
     // put
     // increase/decrease price by category
     @PutMapping("products/type/{type}/increaseOrDeacrease/{increasOrDeacrease}/percentage{discount}")
-    public String updatePriceByType(@RequestParam String email, @RequestParam String tokenValue,@PathVariable IncreasOrDeacrease increasOrDeacrease,@PathVariable Type  type,@PathVariable float discount){
-        return productService.updatePriceByType(email,tokenValue,increasOrDeacrease,type,discount);
+    public String updatePriceByType(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable IncreasOrDeacrease increasOrDeacrease,@PathVariable Type  type,@PathVariable float discount){
+        return productService.updatePriceByType(adminEmail,tokenValue,increasOrDeacrease,type,discount);
     }
 
     // incraese/deacrese price by id
     @PutMapping("products/id/{id}/increaseOrDeacrease/{increasOrDeacrease}/percentage/{discount}")
-    public String updatePriceById(@RequestParam String email, @RequestParam String tokenValue,@PathVariable IncreasOrDeacrease increasOrDeacrease,@PathVariable Integer id,@PathVariable float discount){
-        return productService.updatePriceById(email,tokenValue,id,increasOrDeacrease,discount);
+    public String updatePriceById(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable IncreasOrDeacrease increasOrDeacrease,@PathVariable Integer id,@PathVariable float discount){
+        return productService.updatePriceById(adminEmail,tokenValue,id,increasOrDeacrease,discount);
     }
 
 

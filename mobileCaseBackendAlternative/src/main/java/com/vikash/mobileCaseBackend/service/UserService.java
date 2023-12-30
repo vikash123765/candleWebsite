@@ -3,6 +3,7 @@ package com.vikash.mobileCaseBackend.service;
 
 import com.vikash.mobileCaseBackend.model.AuthenticationToken;
 import com.vikash.mobileCaseBackend.model.User;
+import com.vikash.mobileCaseBackend.repo.IAuthRepo;
 import com.vikash.mobileCaseBackend.repo.IRepoUser;
 
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
@@ -54,7 +55,11 @@ public class UserService {
         // check if user exists via the email
 
         User existingUser = userRepo.findByUserEmail(email);
-        if (existingUser == null) {
+
+        AuthenticationToken existingToken = IAuthRepo.findTokenValueByUser(existingUser);
+        if (existingToken != null) {
+            return "User already signed in";
+        }else if (existingUser == null) {
             return "not valid email,please sign up first!";
 
         }

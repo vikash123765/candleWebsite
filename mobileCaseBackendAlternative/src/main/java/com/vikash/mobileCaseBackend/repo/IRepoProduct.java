@@ -44,4 +44,6 @@ public interface IRepoProduct extends JpaRepository<Product,Integer> {
  List<Product> findProductAvailableByProductTypeOrderByProductPriceDesc(Type type);
 
  List<Product> findProductAvailableByProductTypeOrderByProductPriceAsc(Type type);
+
+
 }

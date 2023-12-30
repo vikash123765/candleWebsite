@@ -101,8 +101,8 @@ public class AdminService {
 
         }
 
-    public List<Product> getProductssById(List<Integer> ids) {
-        return productService.getProductssById(ids);
+    public List<Product> getProductsById(List<Integer> ids) {
+        return productService.getProductsById(ids);
     }
 }
 

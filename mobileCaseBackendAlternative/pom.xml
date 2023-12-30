@@ -51,6 +51,11 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-annotations</artifactId>
+			<version>1.6.2</version> <!-- Use the appropriate version that matches your Swagger version -->
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>

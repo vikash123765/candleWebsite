@@ -114,7 +114,7 @@ public class ProductService {
     }
 
 
-    public List<Product> getProductssById(List<Integer> ids) {
+    public List<Product> getProductsById(List<Integer> ids) {
         return repoProduct.findAllById(ids);
     }
 
