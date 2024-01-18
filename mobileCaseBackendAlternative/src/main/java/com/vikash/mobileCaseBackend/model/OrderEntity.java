@@ -2,8 +2,6 @@ package com.vikash.mobileCaseBackend.model;
 
 
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,12 +21,12 @@ public class OrderEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer orderNumber;
 
-    private LocalDateTime setCreatingTimeStamp;
+    private LocalDateTime creationTimeStamp;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
+   // @JsonFormat(shape = JsonFormat.Shape.STRING)
     private boolean markAsSent;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
+   // @JsonFormat(shape = JsonFormat.Shape.STRING)
     private boolean markAsDelivered;
 
 

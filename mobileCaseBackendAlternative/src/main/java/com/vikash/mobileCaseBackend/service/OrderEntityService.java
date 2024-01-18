@@ -1,9 +1,15 @@
 
 package com.vikash.mobileCaseBackend.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vikash.mobileCaseBackend.model.*;
 import com.vikash.mobileCaseBackend.repo.*;
 import com.vikash.mobileCaseBackend.service.EmailUtility.SendMailOrderInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,6 +34,9 @@ public class OrderEntityService {
     @Autowired
     CartService cartService;
 
+    @Autowired
+    IAuthRepo authRepo;
+
 
     @Autowired
     SendMailOrderInfo sendMailOrderInfo;
@@ -44,32 +53,37 @@ public class OrderEntityService {
 
 
 
-    public List<Map<String, Object>> getOrderHistoryByUserEmail(String email, String tokenValue) {
-        if (authenticationService.authenticate(email, tokenValue)) {
+    public List<Map<String, Object>> getOrderHistoryByUserEmail(String token) {
 
-            // figure out the actual user  with email
-            User user = repoUser.findByUserEmail(email);
+
+        // figure out the actual token with tokenvalue
+        AuthenticationToken actualToken = authRepo.findByTokenValue(token);
+
+        // Check if actualToken is not null
+        if (token != null) {
+            // figure out the email of the user
+            String email = actualToken.getUser().getUserEmail();
+            // we get the user here
+            User user = actualToken.getUser();
 
             // figure out the actual orders of that user
-            List<OrderEntity> orderTobeAcessed = repoOrder.findOrderByUser(user);
+            List<OrderEntity> ordersTobeAccessed = repoOrder.findOrderByUser(user);
 
 
-            if(authorizeOrderHistoryAccesser(email,orderTobeAcessed)) {
-
-
+            if (authorizeOrderHistoryAccesser(email, ordersTobeAccessed)) {
                 List<Map<String, Object>> orderList = new ArrayList<>();
 
-                for (OrderEntity order : orderTobeAcessed) {
+                for (OrderEntity order : ordersTobeAccessed) {
                     Map<String, Object> orderMap = new HashMap<>();
                     orderMap.put("orderId", order.getOrderNumber());
                     orderMap.put("userName", order.getUser().getUserName());
-                    orderMap.put("order placed : ",order.getSetCreatingTimeStamp());
-                    //orderMap.put("delivered", order.get);
-                    // orderMap.put("sent", order.());
+                    orderMap.put("sent", order.isMarkAsSent());
+                    orderMap.put("delivered", order.isMarkAsDelivered());
 
                     // Fetch products associated with the order via repository query
                     List<Product> products = repoProduct.findProductByOrders(order);
                     List<Map<String, Object>> productDetails = new ArrayList<>();
+                    double totalOrderCost = 0.0;
 
                     for (Product product : products) {
                         Map<String, Object> productMap = new HashMap<>();
@@ -77,27 +91,23 @@ public class OrderEntityService {
                         productMap.put("productType", product.getProductType());
                         productMap.put("productPrice", product.getProductPrice());
 
-
-
+                        totalOrderCost += product.getProductPrice();
                         productDetails.add(productMap);
                     }
 
                     orderMap.put("products", productDetails);
+                    orderMap.put("total Cost", totalOrderCost);
                     orderList.add(orderMap);
                 }
 
                 return orderList;
+            } else {
+                return Collections.singletonList(Collections.singletonMap("message", "Unauthorized access"));
             }
-
-            else{
-                return Collections.singletonList(Collections.singletonMap("message", "Unuthorized access"));
-            }
-
         } else {
             // Return a message indicating unauthenticated access
             return Collections.singletonList(Collections.singletonMap("message", "Unauthenticated access"));
         }
-
     }
 
 
@@ -113,15 +123,20 @@ public class OrderEntityService {
 
 
 
-    public String markOrderAsSent(String email, String tokenValue, Integer orderNr, Integer trackingId) {
+    public ResponseEntity<String> markOrderAsSent(String email, String tokenValue, Integer orderNr, Integer trackingId) {
         if (authenticationService.authenticate(email, tokenValue)) {
 
             OrderEntity order = repoOrder.findByOrderNumber(orderNr);
 
+            if (order == null){
+                return new ResponseEntity<>( "order does not exist with order number :" + orderNr,HttpStatus.NOT_FOUND);
+            }
             // Check if trackingId is provided
             if (trackingId != null) {
                 order.setTrackingNumber(trackingId);
             }
+
+
 
             if (!order.isMarkAsSent()) {
                 order.setMarkAsSent(true);
@@ -146,34 +161,37 @@ public class OrderEntityService {
                 String adminEmail="vikash.kosaraju1234@gmail.com";
                 sendMailOrderInfo.sendEmail(adminEmail, subject, body, order);
 
-                return "Order with order number: " + orderNr + " is marked as sent";
+                return new ResponseEntity<>( "Order with order number: " + orderNr + " is marked as sent", HttpStatus.OK);
             } else {
-                return "Order already sent";
+                return new ResponseEntity<>( "Order already sent",HttpStatus.OK);
             }
         } else {
-            return "Unauthenticated access!!!";
+            return new ResponseEntity<>( "Unauthenticated access!!!",HttpStatus.UNAUTHORIZED);
         }
     }
 
 
-    public String markOrderAsDelivered(String email, String tokenValue,Integer orderNr) {
+    public ResponseEntity<String> markOrderAsDelivered(String email, String tokenValue,Integer orderNr) {
         if (authenticationService.authenticate(email, tokenValue)) {
             OrderEntity order = repoOrder.findByOrderNumber(orderNr);
+            if(order == null){
+                return new ResponseEntity<>( "order with order number : " +orderNr +"does not exist",HttpStatus.NOT_FOUND);
+            }
             if(!order.isMarkAsDelivered()){
                 order.setMarkAsDelivered(true);
                 repoOrder.save(order);
-                return "order with  order number : " + orderNr + "is marked as done";
+                return  new ResponseEntity<>("order with  order number : " + orderNr + "is delivered",HttpStatus.OK);
             }else{
-                return "order already sent";
+                return new ResponseEntity<>( "Order already sent",HttpStatus.OK);
             }
         } else {
-            return "Un Authenticated access!!!";
+            return new ResponseEntity<>("Un Authenticated access!!!",HttpStatus.UNAUTHORIZED);
         }
 
     }
 
 
-    public String finalizeOrder(String email, String token) {
+  /*  public String finalizeOrder(String email, String token) {
         if (authenticationService.authenticate(email, token)) {
             User user = repoUser.findByUserEmail(email);
             Cart cart = cartService.getCartByUser(user);
@@ -187,7 +205,7 @@ public class OrderEntityService {
             // Create and populate an OrderEntity
             OrderEntity order = new OrderEntity();
             order.setUser(user);
-            order.setSetCreatingTimeStamp(LocalDateTime.now());
+            order.setCreationTimeStamp(LocalDateTime.now());
 
             // Save the order to the database first
             repoOrder.save(order);
@@ -234,11 +252,70 @@ public class OrderEntityService {
         } else {
             return "Unauthorized access";
         }
+    }*/
+
+
+    public ResponseEntity<String> finalizeOrder(String token, String jsonPayload) {
+        if (authenticationService.authenticateUserLoggedIn(token)) {
+            AuthenticationToken tokenObj = authRepo.findByTokenValue(token);
+            User user = tokenObj.getUser();
+
+            // Parse the JSON payload into a List of product IDs
+            List<Integer> productIds;
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {});
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Error parsing JSON payload", e);
+            }
+
+            // Create and populate an OrderEntity
+            OrderEntity order = new OrderEntity();
+            order.setUser(user);
+            order.setCreationTimeStamp(LocalDateTime.now());
+
+            // Save the order to the database
+            repoOrder.save(order);
+
+            // Retrieve products by productIds and create associations with the order
+            for (Integer productId : productIds) {
+                Product product = repoProduct.findById(productId)
+                        .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
+
+                // Add the product to the order's products list
+                order.getProducts().add(product);
+            }
+
+            // Save the order with associated products
+            repoOrder.save(order);
+
+            // Update the user's orders
+            user.getOrders().add(order);
+            repoUser.save(user);
+
+            // Send email notifications
+            String userSubject = "Order Placed";
+            String userBody = "Your order has been placed. Thank you for shopping with us!";
+            sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
+
+            String adminEmail = "vikash.kosaraju1234@gmail.com";
+            String adminSubject = "New Order Placed";
+            String adminBody = "A new order has been placed. Order Number: " + order.getOrderNumber();
+            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, order);
+
+            return new ResponseEntity<>( "Order finalized successfully!",HttpStatus.OK);
+        } else {
+            return  new ResponseEntity<>("Unauthorized access",HttpStatus.UNAUTHORIZED);
+        }
     }
 
 
 
-    public String finalizeGuestOrder( GuestOrderRequest guestOrderRequest) {
+  /*  private boolean checkPaymentSuccessLogic() {
+    }*/
+
+
+  /*  public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest) {
         // Create a new guest user
         User guestUser = new User();
         guestUser.setUserName(guestOrderRequest.getUserName());
@@ -253,7 +330,7 @@ public class OrderEntityService {
         OrderEntity guestOrder = new OrderEntity();
         guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
         guestOrder.setMarkAsDelivered(false);
-        guestOrder.setSetCreatingTimeStamp(LocalDateTime.now());
+        guestOrder.setCreationTimeStamp(LocalDateTime.now());
 
         // Link the guest order with the guest user
         guestOrder.setUser(savedGuestUser);
@@ -303,9 +380,73 @@ public class OrderEntityService {
         } else {
             return "Guest cart not found. Order finalization failed.";
         }
-    }
+    }*/
 
-    private String generateOrFetchSessionToken(User savedGuestUser) {
+    public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest,String jsonPayload) {
+        // Create a new guest user
+        User guestUser = new User();
+        guestUser.setUserName(guestOrderRequest.getUserName());
+        guestUser.setUserEmail(guestOrderRequest.getEmail());
+        guestUser.setAddress(guestOrderRequest.getShippingAddress());
+        guestUser.setPhoneNumber(guestOrderRequest.getPhoneNumber());
+
+        // Save the guest user to the database
+        User savedGuestUser = repoUser.save(guestUser);
+
+        // Create and populate a GuestOrderEntity
+        OrderEntity guestOrder = new OrderEntity();
+        guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
+        guestOrder.setMarkAsDelivered(false);
+        guestOrder.setCreationTimeStamp(LocalDateTime.now());
+
+        // Link the guest order with the guest user
+        guestOrder.setUser(savedGuestUser);
+
+        // Save the order to the database
+        repoOrder.save(guestOrder);
+
+        // Parse the JSON payload into a List of product IDs
+        List<Integer> productIds;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error parsing JSON payload", e);
+        }
+        // Retrieve products by productIds and create associations with the order
+        for (Integer productId : productIds) {
+            Product product = repoProduct.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
+
+            // Add the product to the order's products list
+            guestOrder.getProducts().add(product);
+        }
+
+        // Save the order with associated products
+        repoOrder.save(guestOrder);
+
+        // Update the user's orders
+        guestUser.getOrders().add(guestOrder);
+        repoUser.save(guestUser);
+
+
+        // Send email notifications
+        String userSubject = "Guest Order Placed";
+        String userBody = "Your guest order has been placed. Thank you for shopping with us!";
+        sendMailOrderInfo.sendEmail(savedGuestUser.getUserEmail(), userSubject, userBody, guestOrder);
+
+        String adminEmail = "admin@example.com"; // Replace with your actual admin email
+        String adminSubject = "New Guest Order Placed";
+        String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
+        sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
+
+        return "Guest order finalized successfully!";
+
+
+}
+
+ /*   private String generateOrFetchSessionToken(User savedGuestUser) {
         // Assuming you have a method to get the session token from the user or some other source
         String sessionToken = generateSessionTokenForUser(savedGuestUser); // Implement this method as needed
 
@@ -338,7 +479,7 @@ public class OrderEntityService {
         // Generate a unique session token using UUID
         return UUID.randomUUID().toString();
     }
-    
+    */
        
 
 /*    private boolean checkPaymentStatus() {

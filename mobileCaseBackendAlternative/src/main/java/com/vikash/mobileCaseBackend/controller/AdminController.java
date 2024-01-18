@@ -9,11 +9,11 @@ import com.vikash.mobileCaseBackend.service.OrderEntityService;
 import com.vikash.mobileCaseBackend.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.annotations.ApiParam;
+
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Validated
@@ -44,16 +44,16 @@ public class AdminController {
     // admin sign in
 
     @PostMapping("admin/signIn")
-    public String adminSignIn(@RequestHeader("email") String adminEmail, @RequestHeader("password") String adminPassword ){
+    public ResponseEntity<String> adminSignIn(@RequestHeader("email") String adminEmail, @RequestHeader("password") String adminPassword ){
 
         return adminService.adminSignIn(adminEmail, adminPassword);
     }
 
 
     @DeleteMapping("admin/signOut")
-    public String adminSgnOut(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String token){
+    public ResponseEntity<String> adminSgnOut( @RequestHeader("x-auth-token") String token){
 
-        return adminService.adminSgnOut(adminEmail,token);
+        return adminService.adminSgnOut(token);
     }
 
     //get  products based on ids
@@ -97,16 +97,16 @@ public class AdminController {
         return productService.removeProductsByIds(adminEmail,tokenValue,ids);
     }
 
-    // cancel an order
+    // remove/cancel an order
     @DeleteMapping("order/{orderNr}")
-    public String cancelOrderByOrderNr(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable  Integer orderNr){
-        return productService.cancelOrderByOrderNr(adminEmail,tokenValue,orderNr);
+    public String cancelOrRemoveOrderByOrderNr(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable  Integer orderNr){
+        return productService.cancelOrRemoveOrderByOrderNr(adminEmail,tokenValue,orderNr);
     }
 
     //mark order as sent
 
     @PutMapping("order/sent/{orderNr}/{trackingId}")
-    String markOrderAsSent (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr,  @RequestParam(required = false) Integer trackingId){
+    public ResponseEntity<String> markOrderAsSent (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr,  @RequestParam(required = false) Integer trackingId){
 
 
         return orderService.markOrderAsSent(adminEmail,tokenValue,orderNr,trackingId);
@@ -114,7 +114,7 @@ public class AdminController {
 
     // mark order as delivered
     @PutMapping("order/delivered/{orderNr}")
-    String markOrderAsDelivered (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr){
+    public ResponseEntity<String> markOrderAsDelivered (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr){
 
 
         return orderService.markOrderAsDelivered(adminEmail,tokenValue,orderNr);
@@ -126,26 +126,26 @@ public class AdminController {
     // marlk product as avaiable
 
     @PostMapping("markAvailable/product/{productId}")
-    String markProductAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer productId){
+    public String markProductAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer productId){
         return productService.markProductAvailable(adminEmail,tokenValue,productId);
     }
 
-    // marlk product as avaiable
+    // marlk product as unavaiable
 
     @PostMapping("markUnAvailable/product/{productId}")
-    String markProductUnAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer productId){
+    public String markProductUnAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer productId){
         return productService.markProductUnAvailable(adminEmail,tokenValue,productId);
     }
 
 
     @PostMapping("markAvailable/productIds")
-    String markProductAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue,@RequestBody List<Integer> productIds){
+    public String markProductAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue,@RequestBody List<Integer> productIds){
         return productService.markProductsAvailable(adminEmail,tokenValue,productIds);
     }
 
 
     @PostMapping("markUnAvailable/productIds")
-    String markProductsUnAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @RequestBody List<Integer> productIds){
+    public String markProductsUnAvailable(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @RequestBody List<Integer> productIds){
         return productService.markProductsUnAvailable(adminEmail,tokenValue,productIds);
     }
 

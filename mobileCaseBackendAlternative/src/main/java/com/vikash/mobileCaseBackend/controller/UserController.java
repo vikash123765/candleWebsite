@@ -6,9 +6,11 @@ import com.vikash.mobileCaseBackend.model.enums.Type;
 import com.vikash.mobileCaseBackend.service.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 
@@ -35,42 +37,62 @@ public class UserController {
 
 
     // user sign up
-    @PostMapping("user/signup")
-    public String userSignUp(@Valid @RequestBody User newUser){
+    @PostMapping("user/signUp")
+    public ResponseEntity<String> userSignUp(@Valid @RequestBody User newUser){
         return userService.userSignUp(newUser);
     }
 
 
     // user sign in
 
-    // can not be using path variable insted shoyld be sent vi request body
+
     @PostMapping("user/signIn")
-    public String UserSignIn(@RequestHeader("email") String email, @RequestHeader("password") String password ){
-        return  userService.UserSignIn(email,password);
+    public ResponseEntity<String> UserSignIn(@RequestHeader("email") String email, @RequestHeader("password") String password ){
+        return  userService.userSignIn(email,password);
     }
     // user sign out
 
     @DeleteMapping("user/signOut")
-    public String userSgnOut(@RequestHeader("email") String email, @RequestHeader("x-auth-token") String token ){
-        return userService.userSgnOut(email,token);
+    public ResponseEntity<String> userSgnOut(@RequestHeader("x-auth-token") String token ){
+        return userService.userSgnOut(token);
+    }
+
+
+    @GetMapping("user/loggedIn/info")
+    public ResponseEntity<?> loggedInInfo(@RequestHeader String token){
+        return  userService.userSingedInInfo(token);
+
     }
 
 
 
     // actually placing order
-    @PostMapping("/finalizeOrder")
+ /*   @PostMapping("/finalizeOrder")
     public String finalizeOrder(@RequestHeader("email") String email, @RequestHeader("x-auth-token") String token) {
         // Validate the token and process the order
         return orderService.finalizeOrder(email, token);
     }
+*/
 
+    @PutMapping("/user/alterInfo")
+    public ResponseEntity<String> alterUserInfo(@RequestHeader("token") String token, @RequestBody User user) throws NoSuchAlgorithmException {
+        return userService.alterUserInfo(token, user);
+    }
 
+    @PostMapping("/finalizeOrder")
+    public ResponseEntity<String> finalizeOrder(@RequestHeader("token") String token, @RequestBody String jsonPayload) {
+        // Validate the token and process the order
+        return orderService.finalizeOrder(token,jsonPayload);
+    }
+
+/*
     // add product to cart
     @PostMapping("add/product/toCart")
     public String addToCart(@RequestHeader("email") String email, @RequestHeader("x-auth-token") String token, @RequestParam String productName) {
         return cartService.addToCart(email,token,productName);
 
-    }
+    }*/
+/*
 
    // add product to guest cart
     @PostMapping("add/products/guestCart")
@@ -78,18 +100,24 @@ public class UserController {
         return guestCartService.addToGuestCart(productName);
 
     }
+*/
 
 
 
     //  finalize order guest order
 
 
+/*
     @PostMapping("/finalizeGuestOrder")
-    public String finalizeGuestOrder( @RequestBody GuestOrderRequest guestOrderRequest) {
+    public String finalizeGuestOrder( @RequestBody GuestOrderRequest guestOrderRequest ) {
         return orderService.finalizeGuestOrder(guestOrderRequest);
     }
+*/
 
-
+    @PostMapping("/finalizeGuestOrder")
+    public String finalizeGuestOrder( @RequestBody GuestOrderRequest guestOrderRequest, String jsonPayload) {
+        return orderService.finalizeGuestOrder(guestOrderRequest,jsonPayload);
+    }
 
 
     // get all products available
@@ -114,22 +142,30 @@ public class UserController {
     }
 
 
+    // alter password
+    @PostMapping("change/password")
+
+    public String changePassword(@RequestHeader String token,@RequestHeader String oldPassword,@RequestHeader String newPassword) throws NoSuchAlgorithmException {
+        return userService.changePassword(token,oldPassword,newPassword);
+    }
+
 
 
     // logged in user order hsitpry
 
     @GetMapping("/user/orderHistory")
-    public List<Map<String,Object>> getOrderHistoryByUserId(@RequestHeader("email") String email, @RequestHeader("x-auth-token") String tokenValue) {
-        return orderService.getOrderHistoryByUserEmail(email,tokenValue);
+    public List<Map<String,Object>> getOrderHistoryByUserId(@RequestHeader String token) {
+        return orderService.getOrderHistoryByUserEmail(token);
     }
 
 
 
     // get product by type and below price range
-    @GetMapping("product/belowPrice/{price}")
-    public List<Product> availableByTypeAndLessThenEqualPrice( @PathVariable double price){
 
-        return productService.availableAndLessThenEqualPrice(price);
+    @GetMapping("product/belowPrice/{price}/type{type}")
+    public List<Product> availableByTypeAndLessThenEqualPrice( @PathVariable double price, @PathVariable Type type){
+
+        return productService.availableAndLessThenEqualPrice(type,price);
     }
 
     // get products sort desc

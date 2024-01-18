@@ -1,5 +1,6 @@
 package com.vikash.mobileCaseBackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 public class Admin {
 
     @Id
+    @JsonIgnore
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long adminId;
     private String adminName;

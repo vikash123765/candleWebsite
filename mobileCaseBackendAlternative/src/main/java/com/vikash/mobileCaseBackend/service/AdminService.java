@@ -8,6 +8,9 @@ import com.vikash.mobileCaseBackend.repo.IRepoAdmin;
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
 import com.vikash.mobileCaseBackend.service.HashingUtility.PasswordEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
@@ -24,27 +27,27 @@ public class AdminService {
    @Autowired
    ProductService productService;
 
-    public String adminSgnOut(String email, String token) {
+    public ResponseEntity<String> adminSgnOut(String token) {
 
 
-        if (authService.authenticate(email, token)) {
+        if (authService.authenticateSignOut(token)) {
             authService.deleteToken(token);
-            return "sign out successfull";
+            return  new ResponseEntity<>( "sign out successfull", HttpStatus.OK);
 
         } else {
-            return "un authorized access";
+            return new ResponseEntity<>("un authorized access",HttpStatus.UNAUTHORIZED);
         }
 
 
     }
 
-    public String adminSignIn(String email, String password) {
+    public ResponseEntity<String> adminSignIn(String email, String password) {
 
         // check if admiin exists via the email
 
         Admin existingAdmin = repoAdmin.findByAdminEmail(email);
         if (existingAdmin == null) {
-            return "not valid email,please sign up first!";
+            return new ResponseEntity<>("not valid email,please sign up first!",HttpStatus.BAD_REQUEST);
 
         }
         try {
@@ -54,20 +57,20 @@ public class AdminService {
                 AuthenticationToken token = new AuthenticationToken(existingAdmin);
                 if (MailHandlerBase.sendEmail(email, "otp after login", token.getTokenValue())) {
                     authService.createToken(token);
-                    return "check email for otp/token ";
+                    return new ResponseEntity<>( "check email for otp/token ", HttpStatus.OK);
 
 
                 } else {
-                    return "error while generating token";
+                    return new ResponseEntity<>("error while generating token",HttpStatus.INTERNAL_SERVER_ERROR);
                 }
 
             }
             else {
                 //password was wrong!!!
-                return "Invalid Credentials!!!";
+                return new ResponseEntity<>( "Invalid Credentials!!!",HttpStatus.UNAUTHORIZED);
             }
         } catch (NoSuchAlgorithmException e) {
-            return "internal server issue while saving password,try again!";
+            return  new ResponseEntity<>("internal server issue while saving password,try again!",HttpStatus.INTERNAL_SERVER_ERROR);
 
 
         }

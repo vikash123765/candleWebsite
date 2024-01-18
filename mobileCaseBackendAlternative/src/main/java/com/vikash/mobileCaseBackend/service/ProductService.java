@@ -104,8 +104,8 @@ public class ProductService {
 
 
 
-    public List<Product> availableAndLessThenEqualPrice(double price) {
-      return repoProduct.findProductAvailableByProductPriceLessThanEqual(price);
+    public List<Product> availableAndLessThenEqualPrice(Type type,double price) {
+      return repoProduct.findProductAvailableByProductTypeAndProductPriceLessThanEqual(type,price);
 
     }
 
@@ -176,7 +176,7 @@ public class ProductService {
         return repoProduct.findProductAvailableByProductTypeOrderByProductPriceAsc(type);
     }
 
-    public String cancelOrderByOrderNr(String adminEmail, String tokenValue, Integer orderNr) {
+    public String cancelOrRemoveOrderByOrderNr(String adminEmail, String tokenValue, Integer orderNr) {
         if (authenticationService.authenticate(adminEmail, tokenValue)) {
             // Find the actual order via the order number
             OrderEntity order = repoOrder.findByOrderNumber(orderNr);
@@ -209,7 +209,8 @@ public class ProductService {
         }
     }
     public List<Product> findProductByName(String productName) {
-        return  repoProduct.findProductAvailableByProductName(productName);
+
+        return repoProduct.findProductAvailableByProductName(productName);
     }
 
     public String markProductAvailable(String adminEmail, String tokenValue,Integer productId) {

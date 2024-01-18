@@ -2,22 +2,24 @@ package com.vikash.mobileCaseBackend.model;
 
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vikash.mobileCaseBackend.model.enums.Gender;
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.Order;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 public class User  {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userId;
@@ -36,8 +38,12 @@ public class User  {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Cart cart;
 
+    @OneToOne(fetch = FetchType.EAGER, mappedBy = "user")
+    @JsonIgnore
+    private AuthenticationToken authenticationToken;
 
     @ManyToMany
+    @JsonIgnore
     @JoinTable(
             name = "user_order",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -46,6 +52,7 @@ public class User  {
     private List<OrderEntity> orders = new ArrayList<>();
 
     @ManyToMany
+    @JsonIgnore
     @JoinTable(
             name = "user_product",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -54,6 +61,7 @@ public class User  {
     private List<Product> products = new ArrayList<>();
 
     @ManyToMany
+    @JsonIgnore
     @JoinTable(
             name = "user_guestcart",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -61,7 +69,18 @@ public class User  {
     )
     private List<GuestCart> guestCarts = new ArrayList<>();
 
-
+    @Override
+    public String toString() {
+        return "User{" +
+                "userId=" + userId +
+                ", userName='" + userName + '\'' +
+                ", address='" + address + '\'' +
+                ", phoneNumber=" + phoneNumber +
+                ", userEmail='" + userEmail + '\'' +
+                ", userPassword='" + userPassword + '\'' +
+                ", gender=" + gender +
+                '}';
+    }
 
 
 }

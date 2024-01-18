@@ -1,6 +1,7 @@
 package com.vikash.mobileCaseBackend.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +15,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 public class AuthenticationToken {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long tokenId;
@@ -24,13 +24,16 @@ public class AuthenticationToken {
     private LocalDateTime tokenCreationDateTime;
 
     @OneToOne
+    @JsonIgnore
     @JoinColumn(name = "fk_user_Id")
-    User user;
-    @OneToOne
-    @JoinColumn(name = "fk_admin_Id")
-    Admin admin;
+    private User user;
 
-    // create contructior which take user as argument
+    @OneToOne
+    @JsonIgnore
+    @JoinColumn(name = "fk_admin_Id")
+    private Admin admin;
+
+    // create constructor which takes user as an argument
 
     public AuthenticationToken(User user){
         this.user=user;
