@@ -60,14 +60,18 @@ public class OrderEntityService {
         AuthenticationToken actualToken = authRepo.findByTokenValue(token);
 
         // Check if actualToken is not null
-        if (token != null) {
+        if (actualToken != null) {
             // figure out the email of the user
             String email = actualToken.getUser().getUserEmail();
             // we get the user here
             User user = actualToken.getUser();
 
             // figure out the actual orders of that user
-            List<OrderEntity> ordersTobeAccessed = repoOrder.findOrderByUser(user);
+            List<OrderEntity> ordersTobeAccessed = repoOrder.findOrdersByUser(user);
+
+            if (ordersTobeAccessed == null) {
+                return Collections.singletonList(Collections.singletonMap("message", user.getUserName() + " does not have any orders"));
+            }
 
 
             if (authorizeOrderHistoryAccesser(email, ordersTobeAccessed)) {
@@ -78,6 +82,7 @@ public class OrderEntityService {
                     orderMap.put("orderId", order.getOrderNumber());
                     orderMap.put("userName", order.getUser().getUserName());
                     orderMap.put("sent", order.isMarkAsSent());
+                    orderMap.put("orderCreated", order.getCreationTimeStamp());
                     orderMap.put("delivered", order.isMarkAsDelivered());
 
                     // Fetch products associated with the order via repository query
@@ -180,6 +185,15 @@ public class OrderEntityService {
             if(!order.isMarkAsDelivered()){
                 order.setMarkAsDelivered(true);
                 repoOrder.save(order);
+                // Send email notification
+                String subject = "Order Marked as Sent";
+                String body = "Your order with order number " + orderNr + " has been marked as delivered.";
+
+                sendMailOrderInfo.sendEmail(order.getUser().getUserEmail(), subject, body, order);
+
+
+                String adminEmail="vikash.kosaraju1234@gmail.com";
+                sendMailOrderInfo.sendEmail(adminEmail, subject, body, order);
                 return  new ResponseEntity<>("order with  order number : " + orderNr + "is delivered",HttpStatus.OK);
             }else{
                 return new ResponseEntity<>( "Order already sent",HttpStatus.OK);
@@ -287,6 +301,7 @@ public class OrderEntityService {
             }
 
             // Save the order with associated products
+
             repoOrder.save(order);
 
             // Update the user's orders
@@ -382,7 +397,7 @@ public class OrderEntityService {
         }
     }*/
 
-    public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest,String jsonPayload) {
+    public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest, String jsonPayload) {
         // Create a new guest user
         User guestUser = new User();
         guestUser.setUserName(guestOrderRequest.getUserName());
@@ -423,8 +438,6 @@ public class OrderEntityService {
             guestOrder.getProducts().add(product);
         }
 
-        // Save the order with associated products
-        repoOrder.save(guestOrder);
 
         // Update the user's orders
         guestUser.getOrders().add(guestOrder);

@@ -72,7 +72,7 @@ public class AuthService {
         if (tokenObj != null) {
             String tokenOfLoggedInUser = tokenObj.getTokenValue();
 
-            if (tokenOfLoggedInUser != null && tokenOfLoggedInUser.equals(token)) {
+            if (tokenOfLoggedInUser != null && tokenOfLoggedInUser.equals(token) ) {
                 return true;
             } else {
 

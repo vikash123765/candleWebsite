@@ -23,9 +23,9 @@ public interface IRepoOrder extends JpaRepository<OrderEntity,Integer> {
 
 
 
-    List<OrderEntity> findOrderByUser(User user);
 
 
+    List<OrderEntity> findOrdersByUser(User user);
 
 
 }

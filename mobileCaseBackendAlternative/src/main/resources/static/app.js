@@ -1,31 +1,24 @@
+function markOrderAsSent() {
+    const orderNumber = document.getElementById('orderNumber').value;
+    const trackingId = document.getElementById('trackingId').value;
 
-function searchProducts() {
-    var productName = document.getElementById("productName").value;
+    const adminEmail = "andreas@gmail.com";  // Replace with your admin email
+    const tokenValue = "58ee7a5b-2a24-4edc-8974-812cbe693a99";  // Replace with the actual token value
 
-    // Make an AJAX request to the backend
-    fetch(`/product/productName/${productName}`)
-        .then(response => response.json())
-        .then(data => {
-            displayProducts(data);
-        })
-        .catch(error => console.error('Error:', error));
-}
-
-function displayProducts(products) {
-    var productListElement = document.getElementById("productList");
-    productListElement.innerHTML = "";
-
-    products.forEach(product => {
-        var listItem = document.createElement("li");
-        listItem.innerHTML = `
-            <strong>ID:</strong> ${product.productId}<br>
-            <strong>Name:</strong> ${product.productName}<br>
-            <strong>Type:</strong> ${product.productType}<br>
-            <strong>Description:</strong> ${product.productDescription}<br>
-            <strong>Price:</strong> ${product.productPrice}<br>
-            <strong>Available:</strong> ${product.productAvailable}<br>
-            <hr>
-        `;
-        productListElement.appendChild(listItem);
+    fetch(`http://your-api-base-url/order/sent/${orderNumber}/${trackingId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'email': adminEmail,
+            'x-auth-token': tokenValue
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('result').innerText = data;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('result').innerText = 'An error occurred. Please try again.';
     });
 }

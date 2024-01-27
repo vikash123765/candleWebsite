@@ -9,12 +9,15 @@ import com.vikash.mobileCaseBackend.repo.IAuthRepo;
 import com.vikash.mobileCaseBackend.repo.IRepoUser;
 
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
+import com.vikash.mobileCaseBackend.service.EmailUtility.SendMailOrderInfo;
 import com.vikash.mobileCaseBackend.service.HashingUtility.PasswordEncryptor;
+import org.aspectj.weaver.patterns.IToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
@@ -30,7 +33,10 @@ public class UserService {
 
     @Autowired
     IAuthRepo iAuthRepo;
+  /*  @Autowired
+    MailHandlerBase mailHandlerBase;
 
+*/
 
     public ResponseEntity<String> userSignUp(User newUser) {
         // Check if user already exists
@@ -45,6 +51,8 @@ public class UserService {
             String encryptedPass = PasswordEncryptor.encrypt(currentPassword);
             newUser.setUserPassword(encryptedPass);
             userRepo.save(newUser);
+            String email = newUser.getUserEmail();
+            MailHandlerBase.sendEmail(email, "user account created!", "congratulations you are have registered onVTS cases!!");
             return new ResponseEntity<>("account created!", HttpStatus.CREATED); // Using 201 Created status
 
         } catch (NoSuchAlgorithmException e) {
@@ -55,8 +63,9 @@ public class UserService {
 
     public ResponseEntity<String> userSignIn(String email, String password) {
         User existingUser = userRepo.findByUserEmail(email);
+
         if (existingUser == null) {
-            return new ResponseEntity<>("not valid email, please sign up first!", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Not a valid email, please sign up first!", HttpStatus.BAD_REQUEST);
         }
 
         try {
@@ -64,24 +73,22 @@ public class UserService {
 
             if (existingUser.getUserPassword().equals(encryptedPassword)) {
                 AuthenticationToken token = new AuthenticationToken(existingUser);
-                if (MailHandlerBase.sendEmail(email, "otp after login", token.getTokenValue())) {
-                    authService.createToken(token);
 
-                    // Create a cookie header with the token value
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.add("X-Token", "token=" + token.getTokenValue());
-                    headers.add("Access-Control-Expose-Headers", "X-Token");
-                    headers.add("Access-Control-Allow-Headers", "X-Token");
+                // if (MailHandlerBase.sendEmail(email, "user signed in", "congratulations")) {
+                authService.createToken(token);
 
-                    return new ResponseEntity<>("Login successful! Check email for otp/token!!!", headers, HttpStatus.OK);
-                } else {
-                    return new ResponseEntity<>("error while generating token!!!", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
+                // Create a cookie header with the token value
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("X-Token", "token=" + token.getTokenValue());
+                headers.add("Access-Control-Expose-Headers", "X-Token");
+                headers.add("Access-Control-Allow-Headers", "X-Token");
+
+                return new ResponseEntity<>("Login successful!", headers, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Invalid Credentials!!!", HttpStatus.UNAUTHORIZED);
+                return new ResponseEntity<>("Error while generating token!!!", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-        } catch (NoSuchAlgorithmException e) {
-            return new ResponseEntity<>("Internal Server issues while saving password, try again later!!!", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Invalid Credentials!!!", HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -115,9 +122,8 @@ public class UserService {
             userInfoDTO.setUserEmail(user.getUserEmail());
             userInfoDTO.setPhoneNumber(user.getPhoneNumber());
             userInfoDTO.setAddress(user.getAddress());
-            // Note: It's not recommended to include sensitive data like passwords in DTOs
             userInfoDTO.setPassword(user.getUserPassword());
-            userInfoDTO.setGender(user.getGender()); // Replace 'Gender' with the actual type
+            userInfoDTO.setGender(user.getGender());
 
             return ResponseEntity.ok(userInfoDTO);
         } else {
@@ -147,7 +153,7 @@ public class UserService {
         }
     }
 
-    public String changePassword(String token, String oldPassword, String newPassword) throws NoSuchAlgorithmException {
+    public ResponseEntity<String> changePassword(String token, String oldPassword, String newPassword) throws NoSuchAlgorithmException {
         AuthenticationToken actualToken = iAuthRepo.findByTokenValue(token);
 
         if (actualToken != null) {
@@ -161,13 +167,37 @@ public class UserService {
                 String encryptedPass = PasswordEncryptor.encrypt(newPassword);
                 user.setUserPassword(encryptedPass);
                 userRepo.save(user);
-                return "User password changed successfully!";
+                return new ResponseEntity<>( "User password changed successfully!",HttpStatus.OK);
             } else {
-                return "Old password doesn't match the current password.";
+                return new ResponseEntity<>("Old password doesn't match the current password.",HttpStatus.BAD_REQUEST);
             }
         } else {
-            return "Invalid authentication token.";
+            return new ResponseEntity<>("Invalid authentication token.",HttpStatus.UNAUTHORIZED);
         }
+    }
+
+   public ResponseEntity<String> customerServiceContactLoggedInUser(String token, String message) {
+        if (authService.authenticateUserLoggedIn(token)) {
+
+            AuthenticationToken tokenObj = iAuthRepo.findByTokenValue(token);
+
+
+            String senderEmail = tokenObj.getUser().getUserEmail();
+
+
+            String adminEmail="vikash.kosaraju1234@gmail.com";
+
+            String userSubject= "customer service";
+            MailHandlerBase.sendEmail( adminEmail,userSubject, message+senderEmail);
+
+
+
+            return new ResponseEntity<>("message was swnt sucessfully",HttpStatus.OK);
+
+        }else {
+            return new ResponseEntity<>("something went wrong",HttpStatus.BAD_REQUEST);
+        }
+
     }
 }
 

@@ -85,6 +85,11 @@ public class UserController {
         return orderService.finalizeOrder(token,jsonPayload);
     }
 
+   @PostMapping("user/loggedIn/customerService/message")
+    public ResponseEntity<String> customerServiceContactLoggedInUser(@RequestHeader("token") String token, String message){
+        return  userService.customerServiceContactLoggedInUser(token,message);
+    }
+
 /*
     // add product to cart
     @PostMapping("add/product/toCart")
@@ -107,17 +112,12 @@ public class UserController {
     //  finalize order guest order
 
 
-/*
-    @PostMapping("/finalizeGuestOrder")
-    public String finalizeGuestOrder( @RequestBody GuestOrderRequest guestOrderRequest ) {
-        return orderService.finalizeGuestOrder(guestOrderRequest);
-    }
-*/
 
     @PostMapping("/finalizeGuestOrder")
-    public String finalizeGuestOrder( @RequestBody GuestOrderRequest guestOrderRequest, String jsonPayload) {
-        return orderService.finalizeGuestOrder(guestOrderRequest,jsonPayload);
+    public String finalizeGuestOrder(@RequestBody GuestOrderRequestWrapper requestWrapper) {
+        return orderService.finalizeGuestOrder(requestWrapper.getGuestOrderRequest(), requestWrapper.getJsonPayload());
     }
+  
 
 
     // get all products available
@@ -145,7 +145,7 @@ public class UserController {
     // alter password
     @PostMapping("change/password")
 
-    public String changePassword(@RequestHeader String token,@RequestHeader String oldPassword,@RequestHeader String newPassword) throws NoSuchAlgorithmException {
+    public ResponseEntity<String> changePassword(@RequestHeader String token,@RequestHeader String oldPassword,@RequestHeader String newPassword) throws NoSuchAlgorithmException {
         return userService.changePassword(token,oldPassword,newPassword);
     }
 
