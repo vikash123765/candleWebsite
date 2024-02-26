@@ -136,16 +136,16 @@ public class UserService {
         AuthenticationToken actualToken = iAuthRepo.findByTokenValue(token);
         User userBefore = actualToken.getUser();
 
-        if (actualToken.getUser() != null) {
+        if (userBefore != null) {
             userBefore.setUserName(user.getUserName());
             userBefore.setUserEmail(user.getUserEmail());
             userBefore.setAddress(user.getAddress());
             userBefore.setPhoneNumber(user.getPhoneNumber());
             userBefore.setAddress(user.getAddress());
             userBefore.setGender(user.getGender());
-            String currentPassword = userBefore.getUserPassword();
-            String encryptedPass = PasswordEncryptor.encrypt(currentPassword);
-            userBefore.setUserPassword(encryptedPass);
+            /*String userPassword = user.getUserPassword();
+            String encryptedPass = PasswordEncryptor.encrypt(userPassword);
+            userBefore.setUserPassword(encryptedPass);*/
             userRepo.save(userBefore);
             return new ResponseEntity<>("User information altered successfully", HttpStatus.OK);
         } else {

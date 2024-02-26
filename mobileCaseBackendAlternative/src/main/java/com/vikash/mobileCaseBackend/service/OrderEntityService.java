@@ -186,7 +186,7 @@ public class OrderEntityService {
                 order.setMarkAsDelivered(true);
                 repoOrder.save(order);
                 // Send email notification
-                String subject = "Order Marked as Sent";
+                String subject = "Order Marked as delivered";
                 String body = "Your order with order number " + orderNr + " has been marked as delivered.";
 
                 sendMailOrderInfo.sendEmail(order.getUser().getUserEmail(), subject, body, order);
@@ -196,7 +196,7 @@ public class OrderEntityService {
                 sendMailOrderInfo.sendEmail(adminEmail, subject, body, order);
                 return  new ResponseEntity<>("order with  order number : " + orderNr + "is delivered",HttpStatus.OK);
             }else{
-                return new ResponseEntity<>( "Order already sent",HttpStatus.OK);
+                return new ResponseEntity<>( "Order already delivered",HttpStatus.OK);
             }
         } else {
             return new ResponseEntity<>("Un Authenticated access!!!",HttpStatus.UNAUTHORIZED);
@@ -306,6 +306,8 @@ public class OrderEntityService {
 
             // Update the user's orders
             user.getOrders().add(order);
+
+            // i need a boolean check here to only save if payment is sucessfull 
             repoUser.save(user);
 
             // Send email notifications
@@ -458,6 +460,75 @@ public class OrderEntityService {
 
 
 }
+
+    public ResponseEntity<Map<String, Object>> calcualteShippingCost(boolean swedenOrNot, boolean tracableOrNonTracable, double packageWeight) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (!tracableOrNonTracable && (packageWeight > 0 && packageWeight <= 50) && swedenOrNot) {
+            response.put("shippingCost", 18);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 50 && packageWeight <= 100) && swedenOrNot) {
+            response.put("shippingCost", 36);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 100 && packageWeight <= 250) && swedenOrNot) {
+            response.put("shippingCost", 54);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 250 && packageWeight <= 500) && swedenOrNot) {
+            response.put("shippingCost", 72);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 500 && packageWeight <= 1000) && swedenOrNot) {
+            response.put("shippingCost", 108);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 1000 && packageWeight <= 2000) && swedenOrNot) {
+            response.put("shippingCost", 126);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (tracableOrNonTracable && (packageWeight > 0 && packageWeight <= 250) && swedenOrNot) {
+            response.put("shippingCost", 58);
+            response.put("message", "Tracable delivery will take 1-2 business days");
+        } else if (tracableOrNonTracable && (packageWeight > 250 && packageWeight <= 500) && swedenOrNot) {
+            response.put("shippingCost", 65);
+            response.put("message", "Tracable delivery will take 1-2 business days");
+        } else if (tracableOrNonTracable && (packageWeight > 500 && packageWeight <= 1000) && swedenOrNot) {
+            response.put("shippingCost", 80);
+            response.put("message", "Tracable delivery will take 1-2 business days");
+        } else if (tracableOrNonTracable && (packageWeight > 1000 && packageWeight <= 2000) && swedenOrNot) {
+            response.put("shippingCost", 118);
+            response.put("message", "Tracable delivery will take 1-2 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 0 && packageWeight <= 50) && !swedenOrNot) {
+            response.put("shippingCost", 36);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 50 && packageWeight <= 100) && !swedenOrNot) {
+            response.put("shippingCost", 54);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 100 && packageWeight <= 250) && !swedenOrNot) {
+            response.put("shippingCost", 100);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 250 && packageWeight <= 500) && !swedenOrNot) {
+            response.put("shippingCost", 130);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 500 && packageWeight <= 1000) && !swedenOrNot) {
+            response.put("shippingCost", 190);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (!tracableOrNonTracable && (packageWeight > 1000 && packageWeight <= 2000) && !swedenOrNot) {
+            response.put("shippingCost", 230);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (tracableOrNonTracable && (packageWeight > 0 && packageWeight <= 250) && !swedenOrNot) {
+            response.put("shippingCost", 139);
+            response.put("message", "Tracable delivery will take 2-3 business days");
+        } else if (tracableOrNonTracable && (packageWeight > 250 && packageWeight <= 1000) && !swedenOrNot) {
+            response.put("shippingCost", 199);
+            response.put("message", "Tracable delivery will take 2-3 business days");
+        } else if (tracableOrNonTracable && (packageWeight > 1000 && packageWeight <= 2000) && !swedenOrNot) {
+            response.put("shippingCost", 280);
+            response.put("message", "Tracable delivery will take 2-3 business days");
+        } else {
+            response.put("error", "Invalid package weight or parameters");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
  /*   private String generateOrFetchSessionToken(User savedGuestUser) {
         // Assuming you have a method to get the session token from the user or some other source

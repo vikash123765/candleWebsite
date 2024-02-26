@@ -38,7 +38,7 @@ public class UserController {
 
     // user sign up
     @PostMapping("user/signUp")
-    public ResponseEntity<String> userSignUp(@Valid @RequestBody User newUser){
+    public ResponseEntity<String> userSignUp(@Valid @RequestBody User newUser) {
         return userService.userSignUp(newUser);
     }
 
@@ -47,23 +47,22 @@ public class UserController {
 
 
     @PostMapping("user/signIn")
-    public ResponseEntity<String> UserSignIn(@RequestHeader("email") String email, @RequestHeader("password") String password ){
-        return  userService.userSignIn(email,password);
+    public ResponseEntity<String> UserSignIn(@RequestHeader("email") String email, @RequestHeader("password") String password) {
+        return userService.userSignIn(email, password);
     }
     // user sign out
 
     @DeleteMapping("user/signOut")
-    public ResponseEntity<String> userSgnOut(@RequestHeader("x-auth-token") String token ){
+    public ResponseEntity<String> userSgnOut(@RequestHeader("x-auth-token") String token) {
         return userService.userSgnOut(token);
     }
 
 
     @GetMapping("user/loggedIn/info")
-    public ResponseEntity<?> loggedInInfo(@RequestHeader String token){
-        return  userService.userSingedInInfo(token);
+    public ResponseEntity<?> loggedInInfo(@RequestHeader String token) {
+        return userService.userSingedInInfo(token);
 
     }
-
 
 
     // actually placing order
@@ -80,14 +79,14 @@ public class UserController {
     }
 
     @PostMapping("/finalizeOrder")
-    public ResponseEntity<String> finalizeOrder(@RequestHeader("token") String token, @RequestBody String jsonPayload) {
+    public ResponseEntity<String> finalizeOrder(@RequestHeader("token") String token, @RequestBody String jsonPayload, boolean checkPyment) {
         // Validate the token and process the order
-        return orderService.finalizeOrder(token,jsonPayload);
+        return orderService.finalizeOrder(token, jsonPayload);
     }
 
-   @PostMapping("user/loggedIn/customerService/message")
-    public ResponseEntity<String> customerServiceContactLoggedInUser(@RequestHeader("token") String token, String message){
-        return  userService.customerServiceContactLoggedInUser(token,message);
+    @PostMapping("user/loggedIn/customerService/message")
+    public ResponseEntity<String> customerServiceContactLoggedInUser(@RequestHeader("token") String token, String message) {
+        return userService.customerServiceContactLoggedInUser(token, message);
     }
 
 /*
@@ -108,8 +107,19 @@ public class UserController {
 */
 
 
-
     //  finalize order guest order
+
+
+    @GetMapping("calculate-shipping-rates/{swedenOrNot}/{tracableOrNonTracable}/{packageWeight}")
+    public ResponseEntity<Map<String, Object>> calculateShippingCost(
+            @PathVariable boolean swedenOrNot,
+            @PathVariable boolean tracableOrNonTracable,
+            @PathVariable double packageWeight)
+           {
+        return orderService.calcualteShippingCost(swedenOrNot,tracableOrNonTracable,packageWeight);
+    }
+
+
 
 
 

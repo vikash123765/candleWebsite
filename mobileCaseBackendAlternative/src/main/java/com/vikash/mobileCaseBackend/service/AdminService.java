@@ -4,9 +4,11 @@ package com.vikash.mobileCaseBackend.service;
 import com.vikash.mobileCaseBackend.model.Admin;
 import com.vikash.mobileCaseBackend.model.AuthenticationToken;
 import com.vikash.mobileCaseBackend.model.Product;
+import com.vikash.mobileCaseBackend.repo.IAuthRepo;
 import com.vikash.mobileCaseBackend.repo.IRepoAdmin;
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
 import com.vikash.mobileCaseBackend.service.HashingUtility.PasswordEncryptor;
+import org.apache.el.parser.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,8 +26,11 @@ public class AdminService {
     @Autowired
     IRepoAdmin repoAdmin;
 
-   @Autowired
-   ProductService productService;
+    @Autowired
+    IAuthRepo authRepo;
+
+    @Autowired
+    ProductService productService;
 
     public ResponseEntity<String> adminSgnOut(String token) {
 
