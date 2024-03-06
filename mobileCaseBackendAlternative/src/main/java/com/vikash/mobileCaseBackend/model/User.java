@@ -25,7 +25,7 @@ public class User  {
     private Integer userId;
     private String userName;
     private String address;
-    private Integer phoneNumber;
+    private Long phoneNumber;
     //@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
     @Column(unique = true)
     private String userEmail;

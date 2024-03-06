@@ -8,11 +8,6 @@ public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/**")
             .allowedOrigins("http://localhost:5173")
             .allowedMethods("GET", "POST", "PUT", "DELETE")
-            .allowedHeaders("*")
-            .allowCredentials(true)
-            .maxAge(3600);
-
-    ; // You can specify specific headers if needed
-
+            .allowedHeaders("*"); // You can specify specific headers if needed
 }
 }

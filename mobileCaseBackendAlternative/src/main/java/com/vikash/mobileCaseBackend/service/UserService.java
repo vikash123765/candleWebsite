@@ -1,26 +1,25 @@
 package com.vikash.mobileCaseBackend.service;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vikash.mobileCaseBackend.model.AuthenticationToken;
 import com.vikash.mobileCaseBackend.model.User;
 import com.vikash.mobileCaseBackend.model.UserInfoDTO;
-import com.vikash.mobileCaseBackend.model.enums.Gender;
 import com.vikash.mobileCaseBackend.repo.IAuthRepo;
 import com.vikash.mobileCaseBackend.repo.IRepoUser;
 
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
-import com.vikash.mobileCaseBackend.service.EmailUtility.SendMailOrderInfo;
 import com.vikash.mobileCaseBackend.service.HashingUtility.PasswordEncryptor;
-import org.aspectj.weaver.patterns.IToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
+import java.util.Map;
 
 @Service
 public class UserService {
@@ -37,15 +36,22 @@ public class UserService {
     MailHandlerBase mailHandlerBase;
 
 */
-
-    public ResponseEntity<String> userSignUp(User newUser) {
+  private final ObjectMapper objectMapper = new ObjectMapper();
+    public ResponseEntity<Map<String, String>> userSignUp(User newUser) throws JsonProcessingException {
         // Check if user already exists
         String newEmail = newUser.getUserEmail();
         User ifExistUser = userRepo.findByUserEmail(newEmail);
-        if (ifExistUser != null) {
-            return new ResponseEntity<>("email already exists please enter unused one!", HttpStatus.BAD_REQUEST);
-        }
+        if(ifExistUser != null) {
+            if (ifExistUser.getUserEmail() != null && ifExistUser.getUserPassword() != null) {
+                Map<String, String> responseBody = Map.of("message", "registered_user");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(responseBody);
+            }
 
+            if (ifExistUser.getUserEmail() != null) {
+                Map<String, String> responseBody = Map.of("message", "guest_user");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(responseBody);
+            }
+        }
         String currentPassword = newUser.getUserPassword();
         try {
             String encryptedPass = PasswordEncryptor.encrypt(currentPassword);
@@ -53,10 +59,13 @@ public class UserService {
             userRepo.save(newUser);
             String email = newUser.getUserEmail();
             MailHandlerBase.sendEmail(email, "user account created!", "congratulations you are have registered onVTS cases!!");
-            return new ResponseEntity<>("account created!", HttpStatus.CREATED); // Using 201 Created status
+            Map<String, String> responseBody = Map.of("message", "account_created");
+            return ResponseEntity.status(HttpStatus.CREATED).body(responseBody); // Using 201 Created status
 
         } catch (NoSuchAlgorithmException e) {
-            return new ResponseEntity<>("internal server issue while saving password, try again!", HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, String> responseBody = Map.of("message", "internal server issue while saving password, try again!");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+
         }
     }
 
@@ -118,9 +127,20 @@ public class UserService {
         if (actualToken.getUser() != null) {
             UserInfoDTO userInfoDTO = new UserInfoDTO();
             User user = actualToken.getUser();
+
             userInfoDTO.setUserName(user.getUserName());
             userInfoDTO.setUserEmail(user.getUserEmail());
-            userInfoDTO.setPhoneNumber(user.getPhoneNumber());
+
+            long phoneNumber = user.getPhoneNumber();
+
+            if (phoneNumber >= Integer.MIN_VALUE && phoneNumber <= Integer.MAX_VALUE) {
+                userInfoDTO.setPhoneNumber((Long) phoneNumber);
+            } else {
+                // Handle the case where the phone number is too large for an int
+                // For example, throw an exception or set a default value
+                userInfoDTO.setPhoneNumber(0L);  // Set a default value or throw an exception
+            }
+
             userInfoDTO.setAddress(user.getAddress());
             userInfoDTO.setPassword(user.getUserPassword());
             userInfoDTO.setGender(user.getGender());
@@ -131,25 +151,24 @@ public class UserService {
         }
     }
 
-    public ResponseEntity<String> alterUserInfo(String token, User user) throws NoSuchAlgorithmException {
+    public ResponseEntity<User> alterUserInfo(String token, User user) throws NoSuchAlgorithmException {
 
         AuthenticationToken actualToken = iAuthRepo.findByTokenValue(token);
         User userBefore = actualToken.getUser();
 
         if (userBefore != null) {
+
             userBefore.setUserName(user.getUserName());
             userBefore.setUserEmail(user.getUserEmail());
             userBefore.setAddress(user.getAddress());
             userBefore.setPhoneNumber(user.getPhoneNumber());
-            userBefore.setAddress(user.getAddress());
             userBefore.setGender(user.getGender());
-            /*String userPassword = user.getUserPassword();
-            String encryptedPass = PasswordEncryptor.encrypt(userPassword);
-            userBefore.setUserPassword(encryptedPass);*/
             userRepo.save(userBefore);
-            return new ResponseEntity<>("User information altered successfully", HttpStatus.OK);
+
+
+            return new ResponseEntity<>(userBefore, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("smething went wrong when altering the user information or user does not exist ", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
     }
 
@@ -176,19 +195,18 @@ public class UserService {
         }
     }
 
-   public ResponseEntity<String> customerServiceContactLoggedInUser(String token, String message) {
+   public ResponseEntity<String> customerServiceContactLoggedInUser(String senderEnail,String subject, String token, String message) {
         if (authService.authenticateUserLoggedIn(token)) {
 
             AuthenticationToken tokenObj = iAuthRepo.findByTokenValue(token);
-
 
             String senderEmail = tokenObj.getUser().getUserEmail();
 
 
             String adminEmail="vikash.kosaraju1234@gmail.com";
 
-            String userSubject= "customer service";
-            MailHandlerBase.sendEmail( adminEmail,userSubject, message+senderEmail);
+
+            MailHandlerBase.sendEmail(adminEmail,senderEmail,message+subject);
 
 
 
@@ -197,6 +215,20 @@ public class UserService {
         }else {
             return new ResponseEntity<>("something went wrong",HttpStatus.BAD_REQUEST);
         }
+
+    }
+
+    public ResponseEntity<String> guestCustomerService(String subject,String sender, String message) {
+
+
+        String adminEmail="vikash.kosaraju1234@gmail.com";
+
+        MailHandlerBase.sendEmail( adminEmail,subject, message);
+
+
+
+      return new ResponseEntity<>("messege was sucessfully sent",HttpStatus.OK);
+
 
     }
 }

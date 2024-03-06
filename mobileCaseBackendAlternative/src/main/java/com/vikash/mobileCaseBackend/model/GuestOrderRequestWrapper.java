@@ -13,3 +13,4 @@ public class GuestOrderRequestWrapper {
     @JsonRawValue
     private String jsonPayload;
 }
+

@@ -16,9 +16,9 @@ public class GuestOrderRequest {
     private String shippingAddress;
     private String email;
 
-    private Integer phoneNumber;
+    private Long phoneNumber;
 
-    private List<GuestCartItem> cartItems;
+   // private List<GuestCartItem> cartItems;
 
 
 

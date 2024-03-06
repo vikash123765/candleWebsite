@@ -328,8 +328,7 @@ public class OrderEntityService {
 
 
 
-  /*  private boolean checkPaymentSuccessLogic() {
-    }*/
+
 
 
   /*  public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest) {
@@ -400,68 +399,130 @@ public class OrderEntityService {
     }*/
 
     public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest, String jsonPayload) {
-        // Create a new guest user
-        User guestUser = new User();
-        guestUser.setUserName(guestOrderRequest.getUserName());
-        guestUser.setUserEmail(guestOrderRequest.getEmail());
-        guestUser.setAddress(guestOrderRequest.getShippingAddress());
-        guestUser.setPhoneNumber(guestOrderRequest.getPhoneNumber());
+        String passedEmail = guestOrderRequest.getEmail();
 
-        // Save the guest user to the database
-        User savedGuestUser = repoUser.save(guestUser);
+        // Check if the user with the provided email already exists
+        User existingUser = repoUser.findByUserEmail(passedEmail);
 
-        // Create and populate a GuestOrderEntity
-        OrderEntity guestOrder = new OrderEntity();
-        guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
-        guestOrder.setMarkAsDelivered(false);
-        guestOrder.setCreationTimeStamp(LocalDateTime.now());
 
-        // Link the guest order with the guest user
-        guestOrder.setUser(savedGuestUser);
+        if (existingUser != null) {
+            // User already exists, link the existing user with the new order and products
 
-        // Save the order to the database
-        repoOrder.save(guestOrder);
 
-        // Parse the JSON payload into a List of product IDs
-        List<Integer> productIds;
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {
-            });
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error parsing JSON payload", e);
+            // Create and populate a GuestOrderEntity
+            OrderEntity guestOrder = new OrderEntity();
+            guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
+            guestOrder.setMarkAsDelivered(false);
+            guestOrder.setCreationTimeStamp(LocalDateTime.now());
+
+            // Link the guest order with the existing user
+            guestOrder.setUser(existingUser);
+
+            // Save the order to the database
+            repoOrder.save(guestOrder);
+
+            // Parse the JSON payload into a List of product IDs
+            List<Integer> productIds;
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {
+                });
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Error parsing JSON payload", e);
+            }
+
+            // Retrieve products by productIds and create associations with the order
+            for (Integer productId : productIds) {
+                Product product = repoProduct.findById(productId)
+                        .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
+
+                // Add the product to the order's products list
+                guestOrder.getProducts().add(product);
+            }
+
+            // Update the user's orders
+            existingUser.getOrders().add(guestOrder);
+            repoUser.save(existingUser);
+
+            // Send email notifications
+            String userSubject = "Guest Order Placed";
+            String userBody = "Your guest order has been placed. Thank you for shopping with us!";
+            sendMailOrderInfo.sendEmail(existingUser.getUserEmail(), userSubject, userBody, guestOrder);
+
+            String adminEmail = "admin@example.com"; // Replace with your actual admin email
+            String adminSubject = "New Guest Order Placed";
+            String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
+            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
+
+            return "Guest order finalized successfully!";
+
+
+        } else {
+
+            // Create a new guest user
+            // User doesn't exist, proceed with creating a new guest user and order
+            User guestUser = new User();
+            guestUser.setUserName(guestOrderRequest.getUserName());
+            guestUser.setUserEmail(guestOrderRequest.getEmail());
+            guestUser.setAddress(guestOrderRequest.getShippingAddress());
+            guestUser.setPhoneNumber(Long.valueOf(String.valueOf(guestOrderRequest.getPhoneNumber())));
+
+            // Save the guest user to the database
+            User savedGuestUser = repoUser.save(guestUser);
+
+            // Create and populate a GuestOrderEntity
+            OrderEntity guestOrder = new OrderEntity();
+            guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
+            guestOrder.setMarkAsDelivered(false);
+            guestOrder.setCreationTimeStamp(LocalDateTime.now());
+
+            // Link the guest order with the guest user
+            guestOrder.setUser(savedGuestUser);
+
+            // Save the order to the database
+            repoOrder.save(guestOrder);
+
+            // Parse the JSON payload into a List of product IDs
+            List<Integer> productIds;
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {
+                });
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Error parsing JSON payload", e);
+            }
+
+            // Retrieve products by productIds and create associations with the order
+            for (Integer productId : productIds) {
+                Product product = repoProduct.findById(productId)
+                        .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
+
+                // Add the product to the order's products list
+                guestOrder.getProducts().add(product);
+            }
+
+            // Update the user's orders
+            savedGuestUser.getOrders().add(guestOrder);
+            repoUser.save(savedGuestUser);
+
+            // Send email notifications and other necessary actions...
+            // Send email notifications
+            String userSubject = "Guest Order Placed";
+            String userBody = "Your guest order has been placed. Thank you for shopping with us!";
+            sendMailOrderInfo.sendEmail(savedGuestUser.getUserEmail(), userSubject, userBody, guestOrder);
+
+            String adminEmail = "admin@example.com"; // Replace with your actual admin email
+            String adminSubject = "New Guest Order Placed";
+            String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
+            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
+
+            return "Guest order finalized successfully!";
+
+
         }
-        // Retrieve products by productIds and create associations with the order
-        for (Integer productId : productIds) {
-            Product product = repoProduct.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
+    }
 
-            // Add the product to the order's products list
-            guestOrder.getProducts().add(product);
-        }
-
-
-        // Update the user's orders
-        guestUser.getOrders().add(guestOrder);
-        repoUser.save(guestUser);
-
-
-        // Send email notifications
-        String userSubject = "Guest Order Placed";
-        String userBody = "Your guest order has been placed. Thank you for shopping with us!";
-        sendMailOrderInfo.sendEmail(savedGuestUser.getUserEmail(), userSubject, userBody, guestOrder);
-
-        String adminEmail = "admin@example.com"; // Replace with your actual admin email
-        String adminSubject = "New Guest Order Placed";
-        String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
-        sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
-
-        return "Guest order finalized successfully!";
-
-
-}
-
-    public ResponseEntity<Map<String, Object>> calcualteShippingCost(boolean swedenOrNot, boolean tracableOrNonTracable, double packageWeight) {
+/*    public ResponseEntity<Map<String, Object>> calcualteShippingCost(boolean swedenOrNot, boolean tracableOrNonTracable, double packageWeight) {
 
         Map<String, Object> response = new HashMap<>();
 
@@ -528,7 +589,78 @@ public class OrderEntityService {
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }*/
+
+    public ResponseEntity<Map<String, Object>> calcualteShippingCost(boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
+
+        Map<String, Object> response = new HashMap<>();
+        double costMultiplier = 0.001; // Divide shipping cost by 10
+
+        if (isNonTraceable && (packageWeight > 0 && packageWeight <= 50) && isSweden) {
+            response.put("shippingCost", 18 * costMultiplier);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (isNonTraceable && (packageWeight > 50 && packageWeight <= 100) && isSweden) {
+            response.put("shippingCost", 36 * costMultiplier);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (isNonTraceable && (packageWeight > 100 && packageWeight <= 250) && isSweden) {
+            response.put("shippingCost", 54 * costMultiplier);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (isNonTraceable && (packageWeight > 250 && packageWeight <= 500) && isSweden) {
+            response.put("shippingCost", 72 * costMultiplier);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (isNonTraceable && (packageWeight > 500 && packageWeight <= 1000) && isSweden) {
+            response.put("shippingCost", 108 * costMultiplier);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (isNonTraceable && (packageWeight > 1000 && packageWeight <= 2000) && isSweden) {
+            response.put("shippingCost", 126 * costMultiplier);
+            response.put("message", "Delivery will take 1-2 business days");
+        } else if (isTraceable && (packageWeight > 0 && packageWeight <= 250) && isSweden) {
+            response.put("shippingCost", 58 * costMultiplier);
+            response.put("message", "Tracable delivery will take 1-2 business days");
+        } else if (isTraceable && (packageWeight > 250 && packageWeight <= 500) && isSweden) {
+            response.put("shippingCost", 65 * costMultiplier);
+            response.put("message", "Tracable delivery will take 1-2 business days");
+        } else if (isTraceable && (packageWeight > 500 && packageWeight <= 1000) && isSweden) {
+            response.put("shippingCost", 80 * costMultiplier);
+            response.put("message", "Tracable delivery will take 1-2 business days");
+        } else if (isTraceable && (packageWeight > 1000 && packageWeight <= 2000) && isSweden) {
+            response.put("shippingCost", 118 * costMultiplier);
+            response.put("message", "Tracable delivery will take 1-2 business days");
+        } else if (isNonTraceable && (packageWeight > 0 && packageWeight <= 50) && isEurope) {
+            response.put("shippingCost", 36 * costMultiplier);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (isNonTraceable && (packageWeight > 50 && packageWeight <= 100) && isEurope) {
+            response.put("shippingCost", 54 * costMultiplier);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (isNonTraceable && (packageWeight > 100 && packageWeight <= 250) && isEurope) {
+            response.put("shippingCost", 100 * costMultiplier);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (isNonTraceable && (packageWeight > 250 && packageWeight <= 500) && isEurope) {
+            response.put("shippingCost", 130 * costMultiplier);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (isNonTraceable && (packageWeight > 500 && packageWeight <= 1000) && isEurope) {
+            response.put("shippingCost", 190 * costMultiplier);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (isNonTraceable && (packageWeight > 1000 && packageWeight <= 2000) && isEurope) {
+            response.put("shippingCost", 230 * costMultiplier);
+            response.put("message", "Delivery will take 2-3 business days");
+        } else if (isTraceable && (packageWeight > 0 && packageWeight <= 250) && isEurope) {
+            response.put("shippingCost", 139 * costMultiplier);
+            response.put("message", "Tracable delivery will take 2-3 business days");
+        } else if (isTraceable && (packageWeight > 250 && packageWeight <= 1000) && isEurope) {
+            response.put("shippingCost", 199 * costMultiplier);
+            response.put("message", "Tracable delivery will take 2-3 business days");
+        } else if (isTraceable && (packageWeight > 1000 && packageWeight <= 2000) && isEurope) {
+            response.put("shippingCost", 280 * costMultiplier);
+            response.put("message", "Tracable delivery will take 2-3 business days");
+        } else {
+            response.put("error", "Invalid package weight or parameters");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
 
  /*   private String generateOrFetchSessionToken(User savedGuestUser) {
         // Assuming you have a method to get the session token from the user or some other source

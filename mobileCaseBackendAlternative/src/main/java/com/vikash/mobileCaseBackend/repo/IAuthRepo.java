@@ -1,6 +1,5 @@
 package com.vikash.mobileCaseBackend.repo;
 
-import com.vikash.mobileCaseBackend.model.Admin;
 import com.vikash.mobileCaseBackend.model.AuthenticationToken;
 import com.vikash.mobileCaseBackend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,5 +26,7 @@ public interface IAuthRepo extends JpaRepository<AuthenticationToken,Long> {
 
    // Admin findAdminByTokenValue(String token);
 
-    User findUserByTokenValue(String token);
+  //  User findUserByTokenValue(String token);
+
+    //AuthenticationToken findTokenValueByAdmin(String adminEmail);
 }

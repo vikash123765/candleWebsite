@@ -1,6 +1,7 @@
 package com.vikash.mobileCaseBackend.controller;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vikash.mobileCaseBackend.model.*;
 import com.vikash.mobileCaseBackend.model.enums.Type;
 import com.vikash.mobileCaseBackend.service.*;
@@ -38,7 +39,7 @@ public class UserController {
 
     // user sign up
     @PostMapping("user/signUp")
-    public ResponseEntity<String> userSignUp(@Valid @RequestBody User newUser) {
+    public ResponseEntity<Map<String, String>> userSignUp(@Valid @RequestBody User newUser) throws JsonProcessingException {
         return userService.userSignUp(newUser);
     }
 
@@ -74,7 +75,7 @@ public class UserController {
 */
 
     @PutMapping("/user/alterInfo")
-    public ResponseEntity<String> alterUserInfo(@RequestHeader("token") String token, @RequestBody User user) throws NoSuchAlgorithmException {
+    public ResponseEntity<User> alterUserInfo(@RequestHeader("token") String token, @RequestBody User user) throws NoSuchAlgorithmException {
         return userService.alterUserInfo(token, user);
     }
 
@@ -84,11 +85,20 @@ public class UserController {
         return orderService.finalizeOrder(token, jsonPayload);
     }
 
-    @PostMapping("user/loggedIn/customerService/message")
-    public ResponseEntity<String> customerServiceContactLoggedInUser(@RequestHeader("token") String token, String message) {
-        return userService.customerServiceContactLoggedInUser(token, message);
+    @PostMapping("user/loggedIn/customerService")
+    public ResponseEntity<String> customerServiceContactLoggedInUser(@RequestHeader("senderEmail") String senderEmail,@RequestHeader("subject") String subject, @RequestHeader("token") String token, @RequestBody String message) {
+        System.out.println(senderEmail);
+        System.out.println(subject);
+        System.out.println(token);
+        System.out.println(message);
+        return userService.customerServiceContactLoggedInUser(senderEmail,subject, token, message);
     }
 
+
+    @PostMapping("guest/customerService/message")
+    public ResponseEntity<String> guestCustomerService(@RequestHeader String senderEmail,@RequestHeader String subject, @RequestBody String message) {
+        return userService.guestCustomerService(senderEmail,subject,message);
+    }
 /*
     // add product to cart
     @PostMapping("add/product/toCart")
@@ -110,13 +120,14 @@ public class UserController {
     //  finalize order guest order
 
 
-    @GetMapping("calculate-shipping-rates/{swedenOrNot}/{tracableOrNonTracable}/{packageWeight}")
+    @GetMapping("calculate-shipping-rates/{isSweden}/{isEurope}/{isTraceable}/{isNonTraceable}/{packageWeight}")
     public ResponseEntity<Map<String, Object>> calculateShippingCost(
-            @PathVariable boolean swedenOrNot,
-            @PathVariable boolean tracableOrNonTracable,
-            @PathVariable double packageWeight)
-           {
-        return orderService.calcualteShippingCost(swedenOrNot,tracableOrNonTracable,packageWeight);
+            @PathVariable boolean isSweden,
+            @PathVariable boolean isEurope,
+            @PathVariable boolean isTraceable,
+            @PathVariable boolean isNonTraceable,
+            @PathVariable double packageWeight) {
+        return orderService.calcualteShippingCost(isSweden, isEurope, isTraceable, isNonTraceable, packageWeight);
     }
 
 
@@ -127,7 +138,8 @@ public class UserController {
     public String finalizeGuestOrder(@RequestBody GuestOrderRequestWrapper requestWrapper) {
         return orderService.finalizeGuestOrder(requestWrapper.getGuestOrderRequest(), requestWrapper.getJsonPayload());
     }
-  
+
+
 
 
     // get all products available

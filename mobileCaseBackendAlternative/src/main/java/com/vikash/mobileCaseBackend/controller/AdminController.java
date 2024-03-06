@@ -50,6 +50,7 @@ public class AdminController {
     }
 
 
+
     @DeleteMapping("admin/signOut")
     public ResponseEntity<String> adminSgnOut( @RequestHeader("x-auth-token") String token){
 
@@ -82,6 +83,11 @@ public class AdminController {
         return productService.addProducts(adminEmail,tokenValue,newProducts);
     }
 
+    @GetMapping("isAdminLoggedIn")
+    public ResponseEntity<Boolean> isAdminLoggedIn(@RequestHeader("adminToken") String adminToken){
+        return adminService.isAdminLoggedIn(adminToken);
+    }
+
     // delete
     @DeleteMapping("product/{productId}")
     public String deletePost(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue,  @PathVariable Integer postId){
@@ -106,7 +112,7 @@ public class AdminController {
     //mark order as sent
 
     @PutMapping("order/sent/{orderNr}/{trackingId}")
-    public ResponseEntity<String> markOrderAsSent (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr,  @RequestParam(required = false) Integer trackingId){
+    public ResponseEntity<String> markOrderAsSent (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr,  @PathVariable(required = false) Integer trackingId){
 
 
         return orderService.markOrderAsSent(adminEmail,tokenValue,orderNr,trackingId);

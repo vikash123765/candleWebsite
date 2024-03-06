@@ -8,7 +8,6 @@ import com.vikash.mobileCaseBackend.repo.IAuthRepo;
 import com.vikash.mobileCaseBackend.repo.IRepoAdmin;
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
 import com.vikash.mobileCaseBackend.service.HashingUtility.PasswordEncryptor;
-import org.apache.el.parser.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -20,6 +19,7 @@ import java.util.List;
 
 @Service
 public class AdminService {
+
 
     @Autowired
     AuthService authService;
@@ -60,9 +60,20 @@ public class AdminService {
             if (existingAdmin.getAdminPassword().equals(encryptedPass)) {
                 // login should be allowed using token
                 AuthenticationToken token = new AuthenticationToken(existingAdmin);
+
+
+                authService.createToken(token);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("X-Token", "token=" + token.getTokenValue());
+                headers.add("Access-Control-Expose-Headers", "X-Token");
+                headers.add("Access-Control-Allow-Headers", "X-Token");
+                headers.add("Access-Control-Expose-Headers","*-Token");
+
                 if (MailHandlerBase.sendEmail(email, "otp after login", token.getTokenValue())) {
-                    authService.createToken(token);
-                    return new ResponseEntity<>( "check email for otp/token ", HttpStatus.OK);
+
+                    return new ResponseEntity<>( "check email for otp/token ", headers, HttpStatus.OK);
+
 
 
                 } else {
@@ -109,8 +120,31 @@ public class AdminService {
 
         }
 
-    public List<Product> getProductsById(List<Integer> ids) {
+
+   public List<Product> getProductsById(List<Integer> ids) {
         return productService.getProductsById(ids);
     }
+
+    public ResponseEntity<Boolean> isAdminLoggedIn(String adminToken) {
+
+        AuthenticationToken tokenObj  = authRepo.findByTokenValue(adminToken);
+
+
+        if(tokenObj== null || tokenObj.getTokenValue() == null  ){
+            return new ResponseEntity<>( false,HttpStatus.NOT_FOUND);
+        }else {
+            return new ResponseEntity<>(  true,HttpStatus.OK);
+        }
+
+    }
+ /*
+    public ResponseEntity<Boolean> adminLoggedInOrNot(String adminEmail) {
+        AuthenticationToken tokenObj  = authRepo.findTokenValueByAdmin(adminEmail);
+        if(tokenObj.getTokenValue() == null){
+            return new ResponseEntity<>(false,HttpStatus.NOT_FOUND);
+        }else{
+            return new ResponseEntity<>(true,HttpStatus.OK);
+        }
+    }*/
 }
 
