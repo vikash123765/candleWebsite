@@ -84,7 +84,7 @@ public class OrderEntityService {
                     orderMap.put("sent", order.isMarkAsSent());
                     orderMap.put("orderCreated", order.getCreationTimeStamp());
                     orderMap.put("delivered", order.isMarkAsDelivered());
-
+                    orderMap.put("trackingId", order.getTrackingNumber());
                     // Fetch products associated with the order via repository query
                     List<Product> products = repoProduct.findProductByOrders(order);
                     List<Map<String, Object>> productDetails = new ArrayList<>();

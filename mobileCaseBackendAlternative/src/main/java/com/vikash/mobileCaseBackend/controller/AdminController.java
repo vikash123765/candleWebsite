@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Validated
@@ -112,7 +113,7 @@ public class AdminController {
     //mark order as sent
 
     @PutMapping("order/sent/{orderNr}/{trackingId}")
-    public ResponseEntity<String> markOrderAsSent (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr,  @PathVariable(required = false) Integer trackingId){
+    public ResponseEntity<String> markOrderAsSent (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr, @PathVariable(required = false) Integer trackingId){
 
 
         return orderService.markOrderAsSent(adminEmail,tokenValue,orderNr,trackingId);
