@@ -16,7 +16,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.json.JSONObject;
 
+import javax.mail.MessagingException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -32,16 +34,17 @@ public class UserService {
 
     @Autowired
     IAuthRepo iAuthRepo;
-  /*  @Autowired
-    MailHandlerBase mailHandlerBase;
+    /*  @Autowired
+      MailHandlerBase mailHandlerBase;
 
-*/
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  */
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public ResponseEntity<Map<String, String>> userSignUp(User newUser) throws JsonProcessingException {
         // Check if user already exists
         String newEmail = newUser.getUserEmail();
         User ifExistUser = userRepo.findByUserEmail(newEmail);
-        if(ifExistUser != null) {
+        if (ifExistUser != null) {
             if (ifExistUser.getUserEmail() != null && ifExistUser.getUserPassword() != null) {
                 Map<String, String> responseBody = Map.of("message", "registered_user");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(responseBody);
@@ -186,50 +189,55 @@ public class UserService {
                 String encryptedPass = PasswordEncryptor.encrypt(newPassword);
                 user.setUserPassword(encryptedPass);
                 userRepo.save(user);
-                return new ResponseEntity<>( "User password changed successfully!",HttpStatus.OK);
+                return new ResponseEntity<>("User password changed successfully!", HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Old password doesn't match the current password.",HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Old password doesn't match the current password.", HttpStatus.BAD_REQUEST);
             }
         } else {
-            return new ResponseEntity<>("Invalid authentication token.",HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("Invalid authentication token.", HttpStatus.UNAUTHORIZED);
         }
     }
 
-   public ResponseEntity<String> customerServiceContactLoggedInUser(String senderEnail,String subject, String token, String message) {
+    public ResponseEntity<String> customerServiceContactLoggedInUser(String subject, String token, String message) {
         if (authService.authenticateUserLoggedIn(token)) {
 
             AuthenticationToken tokenObj = iAuthRepo.findByTokenValue(token);
 
             String senderEmail = tokenObj.getUser().getUserEmail();
 
-
-            String adminEmail="vikash.kosaraju1234@gmail.com";
-
-
-            MailHandlerBase.sendEmail(adminEmail,senderEmail,message+subject);
+            String adminEmail = "vikash.kosaraju1234@gmail.com";
+            JSONObject messageObj = new JSONObject(message);
+            String messageContent = messageObj.getString("message");
 
 
+            String fullMessage = "Received Message\n\n" +
+                    "Subject: " + subject + "\n" +
+                    "Sender Email: " + senderEmail + "\n\n" +
+                    "Message:\n" + messageContent;
+            MailHandlerBase.sendEmail(adminEmail, subject, fullMessage);
 
-            return new ResponseEntity<>("message was swnt sucessfully",HttpStatus.OK);
 
-        }else {
-            return new ResponseEntity<>("something went wrong",HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("message was swnt sucessfully", HttpStatus.OK);
+
+        } else {
+            return new ResponseEntity<>("something went wrong", HttpStatus.BAD_REQUEST);
         }
 
     }
 
-    public ResponseEntity<String> guestCustomerService(String subject,String sender, String message) {
+    public ResponseEntity<String> guestCustomerService(String subject, String senderEmail, String message) {
+        String adminEmail = "vikash.kosaraju1234@gmail.com";
+        // Parse the JSON message to extract the message content
+        JSONObject messageObj = new JSONObject(message);
+        String messageContent = messageObj.getString("message");
+        // Include sender's email in the message body
 
-
-        String adminEmail="vikash.kosaraju1234@gmail.com";
-
-        MailHandlerBase.sendEmail( adminEmail,subject, message);
-
-
-
-      return new ResponseEntity<>("messege was sucessfully sent",HttpStatus.OK);
-
-
+        String fullMessage = "Received Message\n\n" +
+                "Subject: " + subject + "\n" +
+                "Sender Email: " + senderEmail + "\n\n" +
+                "Message:\n" + messageContent;
+        MailHandlerBase.sendEmail(adminEmail, subject, fullMessage);
+        return new ResponseEntity<>("Message was sent successfully", HttpStatus.OK);
     }
 }
 

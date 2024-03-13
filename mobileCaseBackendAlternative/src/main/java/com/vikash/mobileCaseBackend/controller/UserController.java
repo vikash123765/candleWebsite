@@ -86,18 +86,17 @@ public class UserController {
     }
 
     @PostMapping("user/loggedIn/customerService")
-    public ResponseEntity<String> customerServiceContactLoggedInUser(@RequestHeader("senderEmail") String senderEmail,@RequestHeader("subject") String subject, @RequestHeader("token") String token, @RequestBody String message) {
-        System.out.println(senderEmail);
+    public ResponseEntity<String> customerServiceContactLoggedInUser(@RequestHeader("subject") String subject, @RequestHeader("token") String token, @RequestBody String message) {
         System.out.println(subject);
         System.out.println(token);
         System.out.println(message);
-        return userService.customerServiceContactLoggedInUser(senderEmail,subject, token, message);
+        return userService.customerServiceContactLoggedInUser(subject, token, message);
     }
 
 
     @PostMapping("guest/customerService/message")
-    public ResponseEntity<String> guestCustomerService(@RequestHeader String senderEmail,@RequestHeader String subject, @RequestBody String message) {
-        return userService.guestCustomerService(senderEmail,subject,message);
+    public ResponseEntity<String> guestCustomerService(@RequestHeader String subject,@RequestHeader String senderEmail, @RequestBody String message) {
+        return userService.guestCustomerService(subject,senderEmail,message);
     }
 /*
     // add product to cart
