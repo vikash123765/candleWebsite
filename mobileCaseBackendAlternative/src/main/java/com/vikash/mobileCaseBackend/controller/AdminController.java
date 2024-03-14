@@ -128,6 +128,11 @@ public class AdminController {
     }
 
 
+    // alter product
+    @PostMapping("product/alterInfo")
+    public ResponseEntity<String> productAlterInfo(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token")  String tokenValue,@RequestHeader Integer productId,@RequestBody Product productFrontEnd ){
+        return productService.productAlterInfo(adminEmail,tokenValue,productId,productFrontEnd);
+    }
 
 
     // marlk product as avaiable
