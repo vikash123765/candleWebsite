@@ -65,7 +65,7 @@ public class SendMailOrderInfo {
             List<Product> productsForOrder = getProductsForOrder(order);
             for (Product product : productsForOrder) {
                 totalPrice += product.getProductPrice();
-                orderDetails += "  - " + product.getProductName() + ": " + product.getProductPrice() + " units\n";
+                orderDetails += "  - " + product.getProductName() + ": " + product.getProductPrice() + " kr";
             }
 
             orderDetails += "\nTotal Price: $" + totalPrice;
