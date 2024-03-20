@@ -28,7 +28,8 @@ jobs:
             # Check if the pull was successful
             if [ $? -eq 0 ]; then
             sudo mvn -B package --file pom.xml
-            sudo kill -9 sudo lsof -t -i:8080 & sudo java -jar /home/ubuntu/mobileCaseWebsite/mobileCaseBackendAlternative/target/mobileCaseBackend-0.0.1-SNAPSHOT.jar.original
+            sudo lsof -ti:8080 | xargs sudo kill -9 
+            sudo java -jar /home/ubuntu/mobileCaseWebsite/mobileCaseBackendAlternative/target/mobileCaseBackend-0.0.1-SNAPSHOT.jar.original
             echo "Git pull successful, and app process restarted."
             else
             echo "Git pull failed. Please check your Git repository."
