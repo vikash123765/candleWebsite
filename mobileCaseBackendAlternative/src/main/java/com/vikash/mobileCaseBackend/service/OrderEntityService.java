@@ -465,7 +465,7 @@ public class OrderEntityService {
             guestUser.setUserName(guestOrderRequest.getUserName());
             guestUser.setUserEmail(guestOrderRequest.getEmail());
             guestUser.setAddress(guestOrderRequest.getShippingAddress());
-            guestUser.setPhoneNumber(Long.valueOf(String.valueOf(guestOrderRequest.getPhoneNumber())));
+            guestUser.setPhoneNumber(guestOrderRequest.getPhoneNumber());
 
             // Save the guest user to the database
             User savedGuestUser = repoUser.save(guestUser);

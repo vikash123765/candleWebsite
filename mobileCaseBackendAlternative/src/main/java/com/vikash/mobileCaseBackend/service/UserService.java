@@ -134,16 +134,7 @@ public class UserService {
             userInfoDTO.setUserName(user.getUserName());
             userInfoDTO.setUserEmail(user.getUserEmail());
 
-            long phoneNumber = user.getPhoneNumber();
-
-            if (phoneNumber >= Integer.MIN_VALUE && phoneNumber <= Integer.MAX_VALUE) {
-                userInfoDTO.setPhoneNumber((Long) phoneNumber);
-            } else {
-                // Handle the case where the phone number is too large for an int
-                // For example, throw an exception or set a default value
-                userInfoDTO.setPhoneNumber(0L);  // Set a default value or throw an exception
-            }
-
+            userInfoDTO.setPhoneNumber(user.getPhoneNumber());
             userInfoDTO.setAddress(user.getAddress());
             userInfoDTO.setPassword(user.getUserPassword());
             userInfoDTO.setGender(user.getGender());

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 public class UserInfoDTO {
     private String userName;
     private String userEmail;
-    private Long phoneNumber;
+    private String phoneNumber;
     private String address;
     private String password;
     private Gender gender;
