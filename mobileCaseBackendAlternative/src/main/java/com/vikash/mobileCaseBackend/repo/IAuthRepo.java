@@ -24,7 +24,7 @@ public interface IAuthRepo extends JpaRepository<AuthenticationToken,Long> {
 
 
 
-    AuthenticationToken findByAdmin_AdminEmail(String adminEmail);
+   // AuthenticationToken findByAdmin_AdminEmail(String adminEmail);
 
     //User findUserEmailByTokenValue(String token);
 

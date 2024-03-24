@@ -139,13 +139,13 @@ public class AdminService {
 
     }
 
-    public ResponseEntity<String> getAdminToken(String adminEmail) {
+  /*  public ResponseEntity<String> getAdminToken(String adminEmail) {
         AuthenticationToken token = authRepo.findByAdmin_AdminEmail(adminEmail);
         if (token != null) {
             return new ResponseEntity<>("this is the " + token.getTokenValue() + " value for : " + adminEmail, HttpStatus.OK);
         }
         return new ResponseEntity<>("there is no token value for this email", HttpStatus.NOT_FOUND);
-    }
+    }*/
 
 
  /*
