@@ -230,6 +230,14 @@ public class UserService {
         MailHandlerBase.sendEmail(adminEmail, subject, fullMessage);
         return new ResponseEntity<>("Message was sent successfully", HttpStatus.OK);
     }
+
+    public ResponseEntity<String> getUserToken(String userEmail) {
+        User user = userRepo.findByUserEmail(userEmail);
+        String token  = user.getAuthenticationToken().getTokenValue();
+        if (token != null) {
+            return new ResponseEntity<>("this is the" + token + "value for : " + userEmail, HttpStatus.OK);
+        }return new ResponseEntity<>("there is not token value fr this email",HttpStatus.NOT_FOUND);
+    }
 }
 
 

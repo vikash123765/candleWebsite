@@ -126,7 +126,10 @@ public class AdminController {
 
         return orderService.markOrderAsDelivered(adminEmail,tokenValue,orderNr);
     }
-
+    @GetMapping("/getAdminToken")
+    public ResponseEntity<String> getAdminToken(@RequestHeader String adminEmail ) {
+        return adminService.getAdminToken(adminEmail);
+    }
 
 
 

@@ -4,6 +4,7 @@ package com.vikash.mobileCaseBackend.service;
 import com.vikash.mobileCaseBackend.model.Admin;
 import com.vikash.mobileCaseBackend.model.AuthenticationToken;
 import com.vikash.mobileCaseBackend.model.Product;
+import com.vikash.mobileCaseBackend.model.User;
 import com.vikash.mobileCaseBackend.repo.IAuthRepo;
 import com.vikash.mobileCaseBackend.repo.IRepoAdmin;
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
@@ -137,6 +138,16 @@ public class AdminService {
         }
 
     }
+
+    public ResponseEntity<String> getAdminToken(String adminEmail) {
+        AuthenticationToken token = authRepo.findByAdmin_AdminEmail(adminEmail);
+        if (token != null) {
+            return new ResponseEntity<>("this is the " + token.getTokenValue() + " value for : " + adminEmail, HttpStatus.OK);
+        }
+        return new ResponseEntity<>("there is no token value for this email", HttpStatus.NOT_FOUND);
+    }
+
+
  /*
     public ResponseEntity<Boolean> adminLoggedInOrNot(String adminEmail) {
         AuthenticationToken tokenObj  = authRepo.findTokenValueByAdmin(adminEmail);

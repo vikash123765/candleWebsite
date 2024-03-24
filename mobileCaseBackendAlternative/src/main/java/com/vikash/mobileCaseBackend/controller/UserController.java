@@ -138,6 +138,11 @@ public class UserController {
         return orderService.finalizeGuestOrder(requestWrapper.getGuestOrderRequest(), requestWrapper.getJsonPayload());
     }
 
+    @GetMapping("/getUserToken")
+    public ResponseEntity<String> getUserToken(@RequestHeader String userEmail ) {
+        return userService.getUserToken(userEmail);
+    }
+
 
 
 
