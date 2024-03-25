@@ -38,7 +38,7 @@ public class AuthService {
     @Scheduled(fixedRate = 60000)  // runs every 60 seconds
     public void removeExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime thresholdTime = now.minusMinutes(3); // chnage to 30 after you ty it out
+        LocalDateTime thresholdTime = now.minusMinutes(30); // chnage to 30 after you ty it out
 
         List<AuthenticationToken> allTokens = iAuthRepo.findAll();
         List<AuthenticationToken> tokensToDelete = allTokens.stream()
