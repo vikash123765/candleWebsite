@@ -21,6 +21,7 @@ import org.json.JSONObject;
 import javax.mail.MessagingException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
@@ -86,6 +87,7 @@ public class UserService {
             if (existingUser.getUserPassword().equals(encryptedPassword)) {
                 AuthenticationToken token = new AuthenticationToken(existingUser);
 
+                token.setTokenCreationDateTime(LocalDateTime.now());  // Set the token creation time
                 // if (MailHandlerBase.sendEmail(email, "user signed in", "congratulations")) {
                 authService.createToken(token);
 
@@ -231,13 +233,17 @@ public class UserService {
         return new ResponseEntity<>("Message was sent successfully", HttpStatus.OK);
     }
 
- /*   public ResponseEntity<String> getUserToken(String userEmail) {
-        User user = userRepo.findByUserEmail(userEmail);
-        String token  = user.getAuthenticationToken().getTokenValue();
-        if (token != null && token.equals(userEmail.)) {
-            return new ResponseEntity<>("this is the" + token + "value for : " + userEmail, HttpStatus.OK);
-        }return new ResponseEntity<>("there is not token value fr this email",HttpStatus.NOT_FOUND);
-    }*/
+/*  public ResponseEntity<String> getUserToken(String userEmail) {
+
+      User user = userRepo.findByUserEmail(userEmail);
+      String tokenValue = user.getAuthenticationToken().getTokenValue();
+
+      if (authService.authenticate(userEmail, tokenValue)) {
+          if (tokenValue != null && tokenValue.equals(userEmail)) {
+              return new ResponseEntity<>("this is the" + token + "value for : " + userEmail, HttpStatus.OK);
+          } return new ResponseEntity<>("there is not token value fr this email", HttpStatus.NOT_FOUND);
+      }
+  }*/
 }
 
 

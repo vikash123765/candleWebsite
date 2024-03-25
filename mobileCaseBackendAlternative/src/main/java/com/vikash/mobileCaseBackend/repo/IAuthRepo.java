@@ -4,6 +4,10 @@ import com.vikash.mobileCaseBackend.model.AuthenticationToken;
 import com.vikash.mobileCaseBackend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+
 public interface IAuthRepo extends JpaRepository<AuthenticationToken,Long> {
 
 
@@ -22,9 +26,10 @@ public interface IAuthRepo extends JpaRepository<AuthenticationToken,Long> {
 
     AuthenticationToken findByTokenValue(String tokenValue);
 
+    List<AuthenticationToken> findByLastActivityTimeBefore(LocalDateTime thresholdTime);
 
 
-   // AuthenticationToken findByAdmin_AdminEmail(String adminEmail);
+    // AuthenticationToken findByAdmin_AdminEmail(String adminEmail);
 
     //User findUserEmailByTokenValue(String token);
 
