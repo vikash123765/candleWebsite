@@ -15,6 +15,7 @@ import java.time.chrono.ChronoLocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
@@ -33,18 +34,19 @@ public class AuthService {
 
 
 
-    @Transactional
+/*    @Transactional
     @Scheduled(fixedRate = 60000)  // runs every 60 seconds
     public void removeExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime thresholdTime = now.minusMinutes(30);  // 30 minutes ago
+        LocalDateTime thresholdTime = now.minusMinutes(5); // chnage to 30 after you ty it out
 
-        List<AuthenticationToken> expiredTokens = iAuthRepo.findByLastActivityTimeBefore(thresholdTime);
-        iAuthRepo.deleteAll(expiredTokens);
-    }
+        List<AuthenticationToken> allTokens = iAuthRepo.findAll();
+        List<AuthenticationToken> tokensToDelete = allTokens.stream()
+                .filter(token -> token.getTokenCreationDateTime().isBefore(thresholdTime))
+                .collect(Collectors.toList());
 
-
-
+        iAuthRepo.deleteAll(tokensToDelete);
+    }*/
 
 
 
@@ -57,13 +59,8 @@ public class AuthService {
             Admin admin = tokenObj.getAdmin();
 
             if (user != null && user.getUserEmail().equals(email)) {
-                tokenObj.setLastActivityTime(LocalDateTime.now());
-                iAuthRepo.save(tokenObj);
                 return true;
             } else if (admin != null && admin.getAdminEmail().equals(email)) {
-                // Update the lastActivityTime for the token
-                tokenObj.setLastActivityTime(LocalDateTime.now());
-                iAuthRepo.save(tokenObj);  // Save the updated tokenObj
                 return true;
             }
 
@@ -71,9 +68,10 @@ public class AuthService {
         return false;
     }
 
+
     public void deleteToken(String token) {
         AuthenticationToken authObj = iAuthRepo.findByTokenValue(token);
-        iAuthRepo.delete(gitauthObj);
+        iAuthRepo.delete(authObj);
     }
 
     public boolean authenticateSignOut(String token) {

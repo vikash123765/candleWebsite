@@ -87,7 +87,9 @@ public class UserService {
             if (existingUser.getUserPassword().equals(encryptedPassword)) {
                 AuthenticationToken token = new AuthenticationToken(existingUser);
 
-                token.setTokenCreationDateTime(LocalDateTime.now());  // Set the token creation time
+                LocalDateTime tokenCreationDateTime = LocalDateTime.now();
+
+                token.setTokenCreationDateTime(tokenCreationDateTime);  // Set the token creation time
                 // if (MailHandlerBase.sendEmail(email, "user signed in", "congratulations")) {
                 authService.createToken(token);
 
@@ -132,10 +134,9 @@ public class UserService {
         if (actualToken.getUser() != null) {
             UserInfoDTO userInfoDTO = new UserInfoDTO();
             User user = actualToken.getUser();
-
             userInfoDTO.setUserName(user.getUserName());
             userInfoDTO.setUserEmail(user.getUserEmail());
-
+            userInfoDTO.setTokenCreationDateTime(user.getAuthenticationToken().getTokenCreationDateTime());
             userInfoDTO.setPhoneNumber(user.getPhoneNumber());
             userInfoDTO.setAddress(user.getAddress());
             userInfoDTO.setPassword(user.getUserPassword());

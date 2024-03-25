@@ -22,18 +22,17 @@ public class AuthenticationToken {
 
     private String tokenValue;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private LocalDateTime lastActivityTime;
+
 
 
     private LocalDateTime tokenCreationDateTime;
 
-    @OneToOne
+    @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "fk_user_Id")
     private User user;
 
-    @OneToOne
+    @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "fk_admin_Id")
     private Admin admin;

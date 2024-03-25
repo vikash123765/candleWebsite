@@ -26,7 +26,6 @@ public interface IAuthRepo extends JpaRepository<AuthenticationToken,Long> {
 
     AuthenticationToken findByTokenValue(String tokenValue);
 
-    List<AuthenticationToken> findByLastActivityTimeBefore(LocalDateTime thresholdTime);
 
 
     // AuthenticationToken findByAdmin_AdminEmail(String adminEmail);
