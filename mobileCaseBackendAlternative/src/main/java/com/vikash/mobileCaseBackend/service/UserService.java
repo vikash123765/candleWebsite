@@ -131,12 +131,15 @@ public class UserService {
             return new ResponseEntity<>("User is not logged in", HttpStatus.NOT_FOUND);
         }
 
+
+
+
         if (actualToken.getUser() != null) {
             UserInfoDTO userInfoDTO = new UserInfoDTO();
             User user = actualToken.getUser();
             userInfoDTO.setUserName(user.getUserName());
             userInfoDTO.setUserEmail(user.getUserEmail());
-            userInfoDTO.setTokenCreationDateTime(user.getAuthenticationToken().getTokenCreationDateTime());
+
             userInfoDTO.setPhoneNumber(user.getPhoneNumber());
             userInfoDTO.setAddress(user.getAddress());
             userInfoDTO.setPassword(user.getUserPassword());
