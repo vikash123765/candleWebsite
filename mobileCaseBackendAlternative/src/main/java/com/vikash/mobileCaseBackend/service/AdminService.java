@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
@@ -48,8 +49,8 @@ public class AdminService {
 
     }
 
-    public ResponseEntity<String> adminSignIn(String email, String password) {
-        Admin existingAdmin = repoAdmin.findByAdminEmail(email);
+    public ResponseEntity<String> adminSignIn(String adminEmail, String password) {
+        Admin existingAdmin = repoAdmin.findByAdminEmail(adminEmail);
 
         if (existingAdmin != null) {
             try {
@@ -64,7 +65,7 @@ public class AdminService {
                         authService.saveToken(tokenObj);
 
                         HttpHeaders headers = new HttpHeaders();
-                        headers.add("X-Token", "token=" + tokenObj.getTokenValue());
+                        headers.add("X-Token", "tokenA=" + tokenObj.getTokenValue());
                         headers.add("Access-Control-Expose-Headers", "X-Token");
                         headers.add("Access-Control-Allow-Headers", "X-Token");
 
@@ -75,12 +76,12 @@ public class AdminService {
                         authService.createToken(token);
 
                         HttpHeaders headers = new HttpHeaders();
-                        headers.add("X-Token", "token=" + token.getTokenValue());
+                        headers.add("X-Token", "tokenA=" + token.getTokenValue());
                         headers.add("Access-Control-Expose-Headers", "X-Token");
                         headers.add("Access-Control-Allow-Headers", "X-Token");
                         headers.add("Access-Control-Expose-Headers", "*-Token");
 
-                        if (MailHandlerBase.sendEmail(email, "otp after login", token.getTokenValue())) {
+                        if (MailHandlerBase.sendEmail(adminEmail, "otp after login", token.getTokenValue())) {
                             return new ResponseEntity<>("Check email for OTP/token", headers, HttpStatus.OK);
                         } else {
                             return new ResponseEntity<>("Error while generating token", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -143,6 +144,19 @@ public class AdminService {
         }
 
     }
+
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    public ResponseEntity<Boolean> adminLoggedInOrNot(String adminEmail) {
+        Admin adminObj = repoAdmin.findByAdminEmail(adminEmail);
+
+        if (adminObj != null && adminObj.getAuthenticationToken() != null) {
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(false, HttpStatus.NO_CONTENT);
+        }
+    }
+
 
   /*  public ResponseEntity<String> getAdminToken(String adminEmail) {
         AuthenticationToken token = authRepo.findByAdmin_AdminEmail(adminEmail);

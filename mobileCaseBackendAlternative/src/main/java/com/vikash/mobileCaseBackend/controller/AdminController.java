@@ -50,6 +50,11 @@ public class AdminController {
         return adminService.adminSignIn(adminEmail, adminPassword);
     }
 
+    @GetMapping("admin/loggedInOrNot")
+    public ResponseEntity<Boolean> adminLoggedInOrNot(@RequestHeader String adminEmail) {
+        return adminService.adminLoggedInOrNot(adminEmail);
+
+    }
 
 
     @DeleteMapping("admin/signOut")
