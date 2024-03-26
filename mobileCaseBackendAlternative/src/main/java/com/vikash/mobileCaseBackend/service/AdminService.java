@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -48,50 +49,54 @@ public class AdminService {
     }
 
     public ResponseEntity<String> adminSignIn(String email, String password) {
-
-        // check if admiin exists via the email
-
         Admin existingAdmin = repoAdmin.findByAdminEmail(email);
-        if (existingAdmin == null) {
-            return new ResponseEntity<>("not valid email,please sign up first!",HttpStatus.BAD_REQUEST);
 
-        }
-        try {
-            String encryptedPass = PasswordEncryptor.encrypt(password);
-            if (existingAdmin.getAdminPassword().equals(encryptedPass)) {
-                // login should be allowed using token
-                AuthenticationToken token = new AuthenticationToken(existingAdmin);
+        if (existingAdmin != null) {
+            try {
+                String encryptedPass = PasswordEncryptor.encrypt(password);
 
+                if (existingAdmin.getAdminPassword().equals(encryptedPass)) {
+                    if (existingAdmin.getAuthenticationToken() != null) {
+                        // Token exists, update its creation time
+                        AuthenticationToken tokenObj = existingAdmin.getAuthenticationToken();
+                        LocalDateTime tokenCreationDateTime = LocalDateTime.now();
+                        tokenObj.setTokenCreationDateTime(tokenCreationDateTime);
+                        authService.saveToken(tokenObj);
 
-                authService.createToken(token);
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.add("X-Token", "token=" + tokenObj.getTokenValue());
+                        headers.add("Access-Control-Expose-Headers", "X-Token");
+                        headers.add("Access-Control-Allow-Headers", "X-Token");
 
-                HttpHeaders headers = new HttpHeaders();
-                headers.add("X-Token", "token=" + token.getTokenValue());
-                headers.add("Access-Control-Expose-Headers", "X-Token");
-                headers.add("Access-Control-Allow-Headers", "X-Token");
-                headers.add("Access-Control-Expose-Headers","*-Token");
+                        return new ResponseEntity<>("Login successful!", headers, HttpStatus.OK);
+                    } else {
+                        // Token doesn't exist, create a new one
+                        AuthenticationToken token = new AuthenticationToken(existingAdmin);
+                        authService.createToken(token);
 
-                if (MailHandlerBase.sendEmail(email, "otp after login", token.getTokenValue())) {
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.add("X-Token", "token=" + token.getTokenValue());
+                        headers.add("Access-Control-Expose-Headers", "X-Token");
+                        headers.add("Access-Control-Allow-Headers", "X-Token");
+                        headers.add("Access-Control-Expose-Headers", "*-Token");
 
-                    return new ResponseEntity<>( "check email for otp/token ", headers, HttpStatus.OK);
-
-
-
+                        if (MailHandlerBase.sendEmail(email, "otp after login", token.getTokenValue())) {
+                            return new ResponseEntity<>("Check email for OTP/token", headers, HttpStatus.OK);
+                        } else {
+                            return new ResponseEntity<>("Error while generating token", HttpStatus.INTERNAL_SERVER_ERROR);
+                        }
+                    }
                 } else {
-                    return new ResponseEntity<>("error while generating token",HttpStatus.INTERNAL_SERVER_ERROR);
+                    // Password was wrong
+                    return new ResponseEntity<>("Invalid Credentials!!!", HttpStatus.UNAUTHORIZED);
                 }
-
+            } catch (NoSuchAlgorithmException e) {
+                return new ResponseEntity<>("Internal server issue while saving password, try again!", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            else {
-                //password was wrong!!!
-                return new ResponseEntity<>( "Invalid Credentials!!!",HttpStatus.UNAUTHORIZED);
-            }
-        } catch (NoSuchAlgorithmException e) {
-            return  new ResponseEntity<>("internal server issue while saving password,try again!",HttpStatus.INTERNAL_SERVER_ERROR);
-
-
+        } else {
+            // Admin with the given email doesn't exist
+            return new ResponseEntity<>("Admin not found!", HttpStatus.NOT_FOUND);
         }
-
     }
 
 
