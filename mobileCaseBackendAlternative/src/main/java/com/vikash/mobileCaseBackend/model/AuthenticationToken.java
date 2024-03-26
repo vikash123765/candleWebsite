@@ -27,12 +27,12 @@ public class AuthenticationToken {
 
     private LocalDateTime tokenCreationDateTime;
 
-    @ManyToOne
+    @OneToOne
     @JsonIgnore
     @JoinColumn(name = "fk_user_Id")
     private User user;
 
-    @ManyToOne
+    @OneToOne
     @JsonIgnore
     @JoinColumn(name = "fk_admin_Id")
     private Admin admin;

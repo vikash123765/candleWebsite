@@ -67,7 +67,10 @@ public class AuthService {
         }
         return false;
     }
+    public void saveToken(AuthenticationToken tokenObj) {
 
+        iAuthRepo.save(tokenObj);
+    }
 
     public void deleteToken(String token) {
         AuthenticationToken authObj = iAuthRepo.findByTokenValue(token);

@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 
 @Data
@@ -39,9 +38,9 @@ public class User  {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Cart cart;
 
-    @OneToMany
-    @JoinColumn(name = "fk_user_Id")
-    private Set<AuthenticationToken> authenticationTokens;
+    @OneToOne(fetch = FetchType.EAGER, mappedBy = "user")
+    @JsonIgnore
+    private AuthenticationToken authenticationToken;
 
     @ManyToMany
     @JsonIgnore

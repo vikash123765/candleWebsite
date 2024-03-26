@@ -76,38 +76,52 @@ public class UserService {
 
     public ResponseEntity<String> userSignIn(String email, String password) {
         User existingUser = userRepo.findByUserEmail(email);
+        AuthenticationToken tokenObj = existingUser.getAuthenticationToken();
 
-        if (existingUser == null) {
-            return new ResponseEntity<>("Not a valid email, please sign up first!", HttpStatus.BAD_REQUEST);
-        }
+        if (tokenObj != null && tokenObj.getTokenValue() != null) {
+            LocalDateTime tokenCreationDateTime = LocalDateTime.now();
+            tokenObj.setTokenCreationDateTime(tokenCreationDateTime);
+            authService.saveToken(tokenObj);
 
-        try {
-            String encryptedPassword = PasswordEncryptor.encrypt(password);
+            // Create a cookie header with the existing token value
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-Token", "token=" + tokenObj.getTokenValue());
+            headers.add("Access-Control-Expose-Headers", "X-Token");
+            headers.add("Access-Control-Allow-Headers", "X-Token");
 
-            if (existingUser.getUserPassword().equals(encryptedPassword)) {
-                AuthenticationToken token = new AuthenticationToken(existingUser);
+            return new ResponseEntity<>("Login successful!", headers, HttpStatus.OK);
 
-                LocalDateTime tokenCreationDateTime = LocalDateTime.now();
+        } else {
 
-                token.setTokenCreationDateTime(tokenCreationDateTime);  // Set the token creation time
-                // if (MailHandlerBase.sendEmail(email, "user signed in", "congratulations")) {
-                authService.createToken(token);
+            try {
+                String encryptedPassword = PasswordEncryptor.encrypt(password);
 
-                // Create a cookie header with the token value
-                HttpHeaders headers = new HttpHeaders();
-                headers.add("X-Token", "token=" + token.getTokenValue());
-                headers.add("Access-Control-Expose-Headers", "X-Token");
-                headers.add("Access-Control-Allow-Headers", "X-Token");
 
-                return new ResponseEntity<>("Login successful!", headers, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Error while generating token!!!", HttpStatus.INTERNAL_SERVER_ERROR);
+                if (existingUser.getUserPassword().equals(encryptedPassword)) {
+
+                    AuthenticationToken token = new AuthenticationToken(existingUser);
+
+                    LocalDateTime tokenCreationDateTime = LocalDateTime.now();
+
+                    token.setTokenCreationDateTime(tokenCreationDateTime);  // Set the token creation time
+                    // if (MailHandlerBase.sendEmail(email, "user signed in", "congratulations")) {
+                    authService.createToken(token);
+
+                    // Create a cookie header with the token value
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.add("X-Token", "token=" + token.getTokenValue());
+                    headers.add("Access-Control-Expose-Headers", "X-Token");
+                    headers.add("Access-Control-Allow-Headers", "X-Token");
+
+                    return new ResponseEntity<>("Login successful!", headers, HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>("Error while generating token!!!", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            } catch (Exception e) {
+                return new ResponseEntity<>("Invalid Credentials!!!", HttpStatus.UNAUTHORIZED);
             }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Invalid Credentials!!!", HttpStatus.UNAUTHORIZED);
         }
     }
-
 
     public ResponseEntity<String> userSgnOut(String token) {
 
@@ -236,6 +250,8 @@ public class UserService {
         MailHandlerBase.sendEmail(adminEmail, subject, fullMessage);
         return new ResponseEntity<>("Message was sent successfully", HttpStatus.OK);
     }
+
+
 
 /*  public ResponseEntity<String> getUserToken(String userEmail) {
 
