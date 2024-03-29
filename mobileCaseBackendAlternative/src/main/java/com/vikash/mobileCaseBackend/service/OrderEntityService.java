@@ -522,74 +522,73 @@ public class OrderEntityService {
         }
     }
 
-    public ResponseEntity<Map<String, Object>>calcualteShippingCost (boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
-
+    public ResponseEntity<Map<String, Object>>calcualteShippingCost(boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
         Map<String, Object> response = new HashMap<>();
 
-        if (isNonTraceable && (packageWeight > 0 && packageWeight <= 50) && isSweden) {
-            response.put("shippingCost", 18 );
-            response.put("message", "Delivery will take 1-2 business days");
-        } else if (isNonTraceable && (packageWeight > 50 && packageWeight <= 100) && isSweden) {
-            response.put("shippingCost", 36);
-            response.put("message", "Delivery will take 1-2 business days");
-        } else if (isNonTraceable && (packageWeight > 100 && packageWeight <= 250) && isSweden) {
-            response.put("shippingCost", 54 );
-            response.put("message", "Delivery will take 1-2 business days");
-        } else if (isNonTraceable && (packageWeight > 250 && packageWeight <= 500) && isSweden) {
-            response.put("shippingCost", 72 );
-            response.put("message", "Delivery will take 1-2 business days");
-        } else if (isNonTraceable && (packageWeight > 500 && packageWeight <= 1000) && isSweden) {
-            response.put("shippingCost", 108  );
-            response.put("message", "Delivery will take 1-2 business days");
-        } else if (isNonTraceable && (packageWeight > 1000 && packageWeight <= 2000) && isSweden) {
-            response.put("shippingCost", 126  );
-            response.put("message", "Delivery will take 1-2 business days");
-        } else if (isTraceable && (packageWeight > 0 && packageWeight <= 250) && isSweden) {
-            response.put("shippingCost", 58  ); // Corrected this value
-            response.put("message", "Traceable delivery will take 1-2 business days");
-        } else if (isTraceable && (packageWeight > 250 && packageWeight <= 500) && isSweden) {
-            response.put("shippingCost", 65  );
-            response.put("message", "Traceable delivery will take 1-2 business days");
-        } else if (isTraceable && (packageWeight > 500 && packageWeight <= 1000) && isSweden) {
-            response.put("shippingCost", 80  );
-            response.put("message", "Traceable delivery will take 1-2 business days");
-        } else if (isTraceable && (packageWeight > 1000 && packageWeight <= 2000) && isSweden) {
-            response.put("shippingCost", 118 );
-            response.put("message", "Traceable delivery will take 1-2 business days");
-        } else if (isNonTraceable && (packageWeight > 0 && packageWeight <= 50) && isEurope) {
-            response.put("shippingCost", 36 );
-            response.put("message", "Delivery will take 2-3 business days");
-        } else if (isNonTraceable && (packageWeight > 50 && packageWeight <= 100) && isEurope) {
-            response.put("shippingCost", 54  );
-            response.put("message", "Delivery will take 2-3 business days");
-        } else if (isNonTraceable && (packageWeight > 100 && packageWeight <= 250) && isEurope) {
-            response.put("shippingCost", 100 );
-            response.put("message", "Delivery will take 2-3 business days");
-        } else if (isNonTraceable && (packageWeight > 250 && packageWeight <= 500) && isEurope) {
-            response.put("shippingCost", 130 );
-            response.put("message", "Delivery will take 2-3 business days");
-        } else if (isNonTraceable && (packageWeight > 500 && packageWeight <= 1000) && isEurope) {
-            response.put("shippingCost", 190 );
-            response.put("message", "Delivery will take 2-3 business days");
-        } else if (isNonTraceable && (packageWeight > 1000 && packageWeight <= 2000) && isEurope) {
-            response.put("shippingCost", 230  );
-            response.put("message", "Delivery will take 2-3 business days");
-        } else if (isTraceable && (packageWeight > 0 && packageWeight <= 250) && isEurope) {
-            response.put("shippingCost", 139 );
-            response.put("message", "Traceable delivery will take 2-3 business days");
-        } else if (isTraceable && (packageWeight > 250 && packageWeight <= 1000) && isEurope) {
-            response.put("shippingCost", 199  ); // Adjusted this value to fit the weight
-            response.put("message", "Traceable delivery will take 2-3 business days");
-        } else if (isTraceable && (packageWeight > 1000 && packageWeight <= 2000) && isEurope) {
-            response.put("shippingCost", 280);
-            response.put("message", "Traceable delivery will take 2-3 business days");
+        if ((isSweden || isEurope) && (isTraceable || isNonTraceable)) {
+            if (isSweden) {
+                if (isNonTraceable) {
+                    if (packageWeight > 0 && packageWeight <= 50) {
+                        response.put("shippingCost", 18);
+                    } else if (packageWeight > 50 && packageWeight <= 100) {
+                        response.put("shippingCost", 36);
+                    } else if (packageWeight > 100 && packageWeight <= 250) {
+                        response.put("shippingCost", 54);
+                    } else if (packageWeight > 250 && packageWeight <= 500) {
+                        response.put("shippingCost", 72);
+                    } else if (packageWeight > 500 && packageWeight <= 1000) {
+                        response.put("shippingCost", 108);
+                    } else if (packageWeight > 1000 && packageWeight <= 2000) {
+                        response.put("shippingCost", 126);
+                    }
+                    response.put("message", "Delivery with Postnord will take 1-2 business days");
+                } else if (isTraceable) {
+                    if (packageWeight > 0 && packageWeight <= 250) {
+                        response.put("shippingCost", 58);
+                    } else if (packageWeight > 250 && packageWeight <= 500) {
+                        response.put("shippingCost", 65);
+                    } else if (packageWeight > 500 && packageWeight <= 1000) {
+                        response.put("shippingCost", 80);
+                    } else if (packageWeight > 1000 && packageWeight <= 2000) {
+                        response.put("shippingCost", 118);
+                    }
+                    response.put("message", "Delivery with Postnord will take 1-2 business days");
+                }
+            } else if (isEurope) {
+                if (isNonTraceable) {
+                    if (packageWeight > 0 && packageWeight <= 50) {
+                        response.put("shippingCost", 36);
+                    } else if (packageWeight > 50 && packageWeight <= 100) {
+                        response.put("shippingCost", 54);
+                    } else if (packageWeight > 100 && packageWeight <= 250) {
+                        response.put("shippingCost", 100);
+                    } else if (packageWeight > 250 && packageWeight <= 500) {
+                        response.put("shippingCost", 130);
+                    } else if (packageWeight > 500 && packageWeight <= 1000) {
+                        response.put("shippingCost", 190);
+                    } else if (packageWeight > 1000 && packageWeight <= 2000) {
+                        response.put("shippingCost", 230);
+                    }
+                    response.put("message", "Delivery with Postnord will take 2-3 business days");
+                } else if (isTraceable) {
+                    if (packageWeight > 0 && packageWeight <= 250) {
+                        response.put("shippingCost", 139);
+                    } else if (packageWeight > 250 && packageWeight <= 1000) {
+                        response.put("shippingCost", 199);
+                    } else if (packageWeight > 1000 && packageWeight <= 2000) {
+                        response.put("shippingCost", 280);
+                    }
+                    response.put("message", "Delivery with Postnord will take 2-3 business days");
+                }
+            }
         } else {
-            response.put("error", "Invalid package weight or parameters");
+            response.put("error", "Invalid parameters");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
 
 
 
