@@ -61,7 +61,7 @@ public class AdminController {
     //get  products based on ids
 
 
-    @GetMapping("products/ids")
+    @PostMapping("products/ids")
     public List<Product> getProductsByIds(@RequestBody List<Integer> ids){
         return  adminService.getProductsById(ids);
     }
@@ -112,7 +112,7 @@ public class AdminController {
 
     //mark order as sent
 
-    @PostMapping("order/sent/{orderNr}/{trackingId}")
+    @PutMapping("order/sent/{orderNr}/{trackingId}")
     public ResponseEntity<String> markOrderAsSent (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr, @PathVariable(required = false) Integer trackingId){
 
 
@@ -120,7 +120,7 @@ public class AdminController {
     }
 
     // mark order as delivered
-    @PostMapping("order/delivered/{orderNr}")
+    @PutMapping("order/delivered/{orderNr}")
     public ResponseEntity<String> markOrderAsDelivered (@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token") String tokenValue, @PathVariable Integer orderNr){
 
 
