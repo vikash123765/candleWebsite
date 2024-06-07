@@ -1,9 +1,9 @@
-name: Deploy frontend to aws
+name: Deploy backend to aws
 
 on:
   push:
     branches:
-      - latest-working-frontend
+      - latest-working-backend
 
 jobs:
   deploy:
@@ -21,14 +21,14 @@ jobs:
 
           cat << 'EOF' > deploy_script.sh
            #!/bin/bash
-            git_dir="/home/ubuntu/candleFrontEndReact"
+            git_dir="/home/ubuntu/mobileCaseWebsite/mobileCaseBackendAlternative"
             cd "$git_dir"
-            sudo git pull origin latest-working-frontend
+            sudo git pull origin latest-working-backend
 
             # Check if the pull was successful
             if [ $? -eq 0 ]; then
-            sudo npm run build
-            sudo  cp -rf dist/* /var/www/html/
+            sudo mvn -B package --file pom.xml
+            sudo systemctl restart app
             echo "Git pull successful, and app process restarted."
             else
             echo "Git pull failed. Please check your Git repository."
