@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Validated
 @RestController
-@CrossOrigin(origins = "*") // Allow requests from any origin
+@CrossOrigin(origins = "*") // Allow requests sfrom any origin
 public class AdminController {
 
     @Autowired
