@@ -106,7 +106,7 @@ public class AdminService {
             String newEmail = newAdmin.getAdminEmail();
             Admin ifExistAdmin = repoAdmin.findByAdminEmail(newEmail);
             if (ifExistAdmin != null) {
-                return "email already exists please enter unused one!";
+                return "Email already exists please enter unused one!";
 
             }
             String currentPassword = newAdmin.getAdminPassword();
