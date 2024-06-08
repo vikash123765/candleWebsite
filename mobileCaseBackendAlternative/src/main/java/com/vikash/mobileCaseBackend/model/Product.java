@@ -22,7 +22,10 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer productId;
-    private Type productType;
+
+    @Column(name = "product_type")
+    private String productType;
+
     private String productName;
     private String productDescription;
     //private  Integer quantity;

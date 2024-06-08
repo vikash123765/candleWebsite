@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling  // Enable Spring's scheduled task execution
-public class mobileCaseBackendApplication {
+public class   mobileCaseBackendApplication {
 
 
 	public static void main(String[] args) {
