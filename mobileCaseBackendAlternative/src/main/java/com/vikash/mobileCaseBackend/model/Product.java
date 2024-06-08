@@ -24,7 +24,9 @@ public class Product {
     private Integer productId;
 
     @Column(name = "product_type")
-    private String productType;
+    @Enumerated(EnumType.STRING)
+    private Type productType;
+
 
     private String productName;
     private String productDescription;
