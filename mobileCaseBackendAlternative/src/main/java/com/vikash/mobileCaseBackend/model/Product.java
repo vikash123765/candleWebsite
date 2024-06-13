@@ -28,6 +28,8 @@ public class Product {
 
 
     private String productName;
+
+    @Column(length = 1000)
     private String productDescription;
     //private  Integer quantity;
     private boolean productAvailable;
