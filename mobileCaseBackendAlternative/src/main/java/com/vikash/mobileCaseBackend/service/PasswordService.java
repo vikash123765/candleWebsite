@@ -61,14 +61,14 @@ public class PasswordService {
         }
 
         // Reset user's password to a temporary value (e.g., "null")
-        String temporaryPassword = "null";
+        String temporaryPassword = "12345678";
         String encryptedPass = PasswordEncryptor.encrypt(temporaryPassword);
         user.setUserPassword(encryptedPass);
         userRepo.save(user);
 
 
-        String message = "Your password has been reset to a temporary value ('null'). "
-                + "Please log in with this password and update it from your profile section.";
+        String message = "Your password has been reset to a temporary value = 12345678 "
+                + "Please log in with this password and update it any password from your profile section.";
 
         // Send email notification about password reset
         MailHandlerBase.sendEmail(email, "New Temporary Password", message);
