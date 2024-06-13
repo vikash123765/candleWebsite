@@ -36,6 +36,10 @@ public class UserController {
     @Autowired
     GuestCartService guestCartService;
 
+    @Autowired
+    PasswordService passwordService;
+
+
 
     // user sign up
     @PostMapping("user/signUp")
@@ -208,6 +212,19 @@ public class UserController {
         return productService.sortByPriceAscAndType(type);
 
     }
+
+    @PostMapping("/resetPasswordToken")
+    public ResponseEntity<String> resetPasswordToken(  @RequestHeader String email) {
+
+        return passwordService.resetPasswordToken(email);
+    }
+
+    @PostMapping("/resetPassword")
+    public ResponseEntity<String> resetPassword( @RequestHeader("token") String token,@RequestHeader String email) throws NoSuchAlgorithmException {
+        // Validate the token and process the order
+        return passwordService.resetPassword(token,email);
+    }
+
 
 
 
