@@ -5,6 +5,7 @@ import com.vikash.mobileCaseBackend.model.User;
 import com.vikash.mobileCaseBackend.repo.IRepoPasswordResetToken;
 import com.vikash.mobileCaseBackend.repo.IRepoUser;
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
+import com.vikash.mobileCaseBackend.service.HashingUtility.PasswordEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,9 +62,10 @@ public class PasswordService {
 
         // Reset user's password to a temporary value (e.g., "null")
         String temporaryPassword = "null";
-        user.setUserPassword(PasswordEncryptor.encrypt(temporaryPassword)); // Encrypt if necessary
-        
+        String encryptedPass = PasswordEncryptor.encrypt(temporaryPassword);
+        user.setUserPassword(encryptedPass);
         userRepo.save(user);
+
 
         String message = "Your password has been reset to a temporary value ('null'). "
                 + "Please log in with this password and update it from your profile section.";
