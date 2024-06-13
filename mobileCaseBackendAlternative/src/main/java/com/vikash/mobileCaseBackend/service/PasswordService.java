@@ -61,8 +61,8 @@ public class PasswordService {
 
         // Reset user's password to a temporary value (e.g., "null")
         String temporaryPassword = "null";
-        // user.setUserPassword(PasswordEncryptor.encrypt(temporaryPassword)); // Encrypt if necessary
-        user.setUserPassword(temporaryPassword);
+        user.setUserPassword(PasswordEncryptor.encrypt(temporaryPassword)); // Encrypt if necessary
+        
         userRepo.save(user);
 
         String message = "Your password has been reset to a temporary value ('null'). "
