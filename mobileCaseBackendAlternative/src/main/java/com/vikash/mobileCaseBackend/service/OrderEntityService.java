@@ -312,7 +312,7 @@ public class OrderEntityService {
 
             // Send email notifications
             String userSubject = "Order Placed";
-            String userBody = "Your order has been placed. Thank you for shopping with us!";
+            String userBody = "Your order has been placed. Thank you for shopping with us!, you will be notified once order is sent and provided with tracking id if that was your mode of delivery.";
             sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
 
             String adminEmail = "vikash.kosaraju1234@gmail.com";
@@ -446,7 +446,7 @@ public class OrderEntityService {
 
             // Send email notifications
             String userSubject = "Guest Order Placed";
-            String userBody = "Your guest order has been placed. Thank you for shopping with us!";
+            String userBody = "Your order has been placed. Thank you for shopping with us!, you will be notified once order is sent and provided with tracking id if that was your mode of delivery.";
             sendMailOrderInfo.sendEmail(existingUser.getUserEmail(), userSubject, userBody, guestOrder);
 
             String adminEmail = "admin@example.com"; // Replace with your actual admin email
