@@ -521,6 +521,7 @@ public class OrderEntityService {
 
         }
     }
+/*
 
     public ResponseEntity<Map<String, Object>>calcualteShippingCost(boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
         Map<String, Object> response = new HashMap<>();
@@ -589,10 +590,11 @@ public class OrderEntityService {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+*/
 
 
 
-    /*
+
 
     public ResponseEntity<Map<String, Object>>calcualteShippingCost (boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
 
@@ -662,8 +664,7 @@ public class OrderEntityService {
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }*/
-
+    }
 
  /*   private String generateOrFetchSessionToken(User savedGuestUser) {
         // Assuming you have a method to get the session token from the user or some other source
