@@ -26,10 +26,7 @@ public class Product {
     @Column(name = "product_type")
     private String productType;
 
-
     private String productName;
-
-    @Column(length = 1000)
     private String productDescription;
     //private  Integer quantity;
     private boolean productAvailable;

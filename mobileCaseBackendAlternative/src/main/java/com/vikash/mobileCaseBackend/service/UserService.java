@@ -62,7 +62,7 @@ public class UserService {
             newUser.setUserPassword(encryptedPass);
             userRepo.save(newUser);
             String email = newUser.getUserEmail();
-            MailHandlerBase.sendEmail(email, "user account created!", "congratulations you are have registered onVTS cases!!");
+            MailHandlerBase.sendEmail(email, "User account created!", "Congratulations your account is registered onVTS cases!!");
             Map<String, String> responseBody = Map.of("message", "account_created");
             return ResponseEntity.status(HttpStatus.CREATED).body(responseBody); // Using 201 Created status
 

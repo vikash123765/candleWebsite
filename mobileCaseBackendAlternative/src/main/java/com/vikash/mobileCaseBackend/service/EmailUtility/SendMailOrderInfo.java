@@ -68,7 +68,7 @@ public class SendMailOrderInfo {
                 orderDetails += "  - " + product.getProductName() + ": " + product.getProductPrice() + " units\n";
             }
 
-            orderDetails += "\nTotal Price: $" + totalPrice;
+            orderDetails += "\nTotal Price: SEK" + totalPrice;
             message.setText(body + "\n\n" + orderDetails);
 
             Transport.send(message);
