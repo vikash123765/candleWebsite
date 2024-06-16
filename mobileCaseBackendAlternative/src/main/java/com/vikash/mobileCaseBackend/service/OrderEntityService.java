@@ -44,13 +44,7 @@ public class OrderEntityService {
 
 
     @Autowired
-    IRepoCart repoCart;
-
-    @Autowired
-    IRepoGuestCart iRepoGuestCart;
-    @Autowired
-    IRepoGuestCartItem iRepoGuestCartItem;
-
+    iRepoProductOrder repoProductOrder;
 
 
     public List<Map<String, Object>> getOrderHistoryByUserEmail(String token) {
@@ -62,69 +56,66 @@ public class OrderEntityService {
         // Check if actualToken is not null
         if (actualToken != null) {
             // figure out the email of the user
-            String email = actualToken.getUser().getUserEmail();
+
             // we get the user here
             User user = actualToken.getUser();
 
-            // figure out the actual orders of that user
-            List<OrderEntity> ordersTobeAccessed = repoOrder.findOrdersByUser(user);
+            List<OrderEntity> orders = repoOrder.findOrdersByUser(user);
 
-            if (ordersTobeAccessed == null) {
+            if (orders == null || orders.isEmpty()) {
                 return Collections.singletonList(Collections.singletonMap("message", user.getUserName() + " does not have any orders"));
             }
 
 
-            if (authorizeOrderHistoryAccesser(email, ordersTobeAccessed)) {
-                List<Map<String, Object>> orderList = new ArrayList<>();
+            List<Map<String, Object>> orderList = new ArrayList<>();
 
-                for (OrderEntity order : ordersTobeAccessed) {
-                    Map<String, Object> orderMap = new HashMap<>();
-                    orderMap.put("orderId", order.getOrderNumber());
-                    orderMap.put("userName", order.getUser().getUserName());
-                    orderMap.put("sent", order.isMarkAsSent());
-                    orderMap.put("orderCreated", order.getCreationTimeStamp());
-                    orderMap.put("delivered", order.isMarkAsDelivered());
-                    orderMap.put("trackingId", order.getTrackingNumber());
-                    // Fetch products associated with the order via repository query
-                    List<Product> products = repoProduct.findProductByOrders(order);
-                    List<Map<String, Object>> productDetails = new ArrayList<>();
-                    double totalOrderCost = 0.0;
+            for (OrderEntity order : orders) {
+                Map<String, Object> orderMap = new HashMap<>();
+                orderMap.put("orderId", order.getOrderNumber());
+                orderMap.put("userName", order.getUser().getUserName());
+                orderMap.put("sent", order.isMarkAsSent());
+                orderMap.put("orderCreated", order.getCreationTimeStamp());
+                orderMap.put("delivered", order.isMarkAsDelivered());
+                orderMap.put("trackingId", order.getTrackingNumber());
 
-                    for (Product product : products) {
-                        Map<String, Object> productMap = new HashMap<>();
+                // Fetch products and quantities associated with the order
+                List<Object[]> productOrderQuantities = repoProductOrder.findProductOrderQuantities(order.getOrderNumber());
+                List<Map<String, Object>> productDetails = new ArrayList<>();
+                double totalOrderCost = 0.0;
+
+                for (Object[] result : productOrderQuantities) {
+                    Map<String, Object> productMap = new HashMap<>();
+                    productMap.put("productId", result[0]);
+                    productMap.put("orderId", result[1]);
+                    productMap.put("quantity", result[2]);
+
+                    // Assuming you have a method to fetch product details by productId
+                    Product product = repoProduct.findById((Integer) result[0]).orElse(null);
+                    if (product != null) {
                         productMap.put("productName", product.getProductName());
                         productMap.put("productType", product.getProductType());
                         productMap.put("productPrice", product.getProductPrice());
 
-                        totalOrderCost += product.getProductPrice();
-                        productDetails.add(productMap);
+                        totalOrderCost += product.getProductPrice() * (Long) result[2];
+
                     }
 
-                    orderMap.put("products", productDetails);
-                    orderMap.put("total Cost", totalOrderCost);
-                    orderList.add(orderMap);
+                    productDetails.add(productMap);
                 }
 
-                return orderList;
-            } else {
-                return Collections.singletonList(Collections.singletonMap("message", "Unauthorized access"));
+                orderMap.put("products", productDetails);
+                orderMap.put("totalCost", totalOrderCost);
+                orderList.add(orderMap);
             }
-        } else {
-            // Return a message indicating unauthenticated access
-            return Collections.singletonList(Collections.singletonMap("message", "Unauthenticated access"));
+
+            return orderList;
         }
-    }
 
 
-    private boolean authorizeOrderHistoryAccesser(String email, List<OrderEntity> orderTobeAcessed) {
-        User potentialAccesser = repoUser.findByUserEmail(email);
-        for (OrderEntity order : orderTobeAcessed) {
-            if (order.getUser().getUserEmail().equals(potentialAccesser.getUserEmail())) {
-                return true;
-            }
-        }
-        return false;
+        // If token is not valid or user not found, return empty list or handle accordingly
+        return Collections.emptyList();
     }
+    
 
 
 

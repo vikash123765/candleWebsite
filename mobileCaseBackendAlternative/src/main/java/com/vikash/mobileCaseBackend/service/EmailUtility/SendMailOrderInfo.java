@@ -4,30 +4,34 @@ import com.vikash.mobileCaseBackend.model.OrderEntity;
 import com.vikash.mobileCaseBackend.model.Product;
 import com.vikash.mobileCaseBackend.repo.IRepoOrder;
 import com.vikash.mobileCaseBackend.repo.IRepoProduct;
+import com.vikash.mobileCaseBackend.repo.iRepoProductOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
 @Service
 public class SendMailOrderInfo {
     @Autowired
-    private
+
     IRepoOrder orderEntityRepository; // Assuming you have a Spring Data JPA repository for OrderEntity
 
     @Autowired
-    private
+
     IRepoProduct productRepository; // Assuming you have a Spring Data JPA repository for Product
 
-
+    @Autowired
+    iRepoProductOrder iRepoProductOrder;
 
     public void sendEmail(String to, String subject, String body, OrderEntity order) {
         final String username = "vikash.kosaraju1234@gmail.com";
         final String password = "wffu jvky tjow ozji"; // Use your App Password if 2FA is enabled
+
+
 
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
@@ -36,12 +40,11 @@ public class SendMailOrderInfo {
         props.put("mail.smtp.port", "587");
         props.put("mail.smtp.ssl.trust", "smtp.gmail.com"); // Trust the Gmail server
 
-        Session session = Session.getInstance(props,
-                new Authenticator() {
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(username, password);
-                    }
-                });
+        Session session = Session.getInstance(props, new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+        });
 
         try {
             Message message = new MimeMessage(session);
@@ -49,27 +52,41 @@ public class SendMailOrderInfo {
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
             message.setSubject(subject);
 
+            // Prepare email body
+            StringBuilder orderDetails = new StringBuilder();
+            orderDetails.append("Order Number: ").append(order.getOrderNumber()).append("\n\n");
+            orderDetails.append("Order Details:\n");
+            orderDetails.append("  - Name: ").append(order.getUser().getUserName()).append("\n");
+            orderDetails.append("  - Email: ").append(order.getUser().getUserEmail()).append("\n");
+            orderDetails.append("  - Shipping Address: ").append(order.getUser().getAddress()).append("\n");
+            orderDetails.append("  - Phone Number: ").append(order.getUser().getPhoneNumber()).append("\n\n");
+            orderDetails.append("Products:\n");
 
+            // Fetch products and their quantities for the order
+            List<Object[]> productQuantities = iRepoProductOrder.findProductOrderQuantities(order.getOrderNumber());
 
             double totalPrice = 0.0;
-            // Include order details in the email body
-            String orderDetails = "Order Number: " + order.getOrderNumber() + "\n\n";
-            orderDetails += " order  Details:\n";
-            orderDetails += "  - Name: " + order.getUser().getUserName() + "\n";
-            orderDetails += "  - Email: " + order.getUser().getUserEmail() + "\n";
-            orderDetails += "  - Shipping Address: " + order.getUser().getAddress() + "\n";
-            orderDetails += "  - Phone Number: " + order.getUser().getPhoneNumber() + "\n\n";
-            orderDetails += "Products:\n";
 
+            // Append each product to the email body
+            for (Object[] result : productQuantities) {
+                int productId = (int) result[0];
+                int orderId = (int) result[1];
+                long quantity = (long) result[2]; // Assuming quantity is returned as long
 
-            List<Product> productsForOrder = getProductsForOrder(order);
-            for (Product product : productsForOrder) {
-                totalPrice += product.getProductPrice();
-                orderDetails += "  - " + product.getProductName() + ": " + product.getProductPrice() + " SEK\n";
+                // Assuming you have a method to fetch product details based on productId
+                Product product = getProductDetails(productId);
+
+                if (product != null) {
+                    double productPrice = product.getProductPrice();
+
+                    totalPrice += productPrice * quantity;
+                    orderDetails.append("  - ").append(product.getProductName()).append(": ")
+                            .append(productPrice).append(" SEK").append(" x ").append(quantity).append("\n");
+                }
             }
 
-            orderDetails += "\nTotal Price: SEK" + totalPrice + "+ Shipping charges";
-            message.setText(body + "\n\n" + orderDetails);
+            orderDetails.append("\nTotal Price: SEK ").append(totalPrice).append(" + Shipping charges");
+            message.setText(body + "\n\n" + orderDetails.toString());
 
             Transport.send(message);
             System.out.println("Email sent to: " + to);
@@ -79,10 +96,9 @@ public class SendMailOrderInfo {
         }
     }
 
-    private List<Product> getProductsForOrder(OrderEntity order) {
-        return productRepository.findProductByOrders(order);
+    private Product getProductDetails(int productId) {
+        return productRepository.findById(productId).orElse(null);
+
     }
-
 }
-
 
