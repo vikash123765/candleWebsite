@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface IProductOrderSnapshot extends JpaRepository<ProductOrderSnapshot,Integer> {
-    List<ProductOrderSnapshot> findBySnapshotTimeAfter(LocalDateTime snapshotTime);
+    @Query("SELECT s FROM ProductOrderSnapshot s ORDER BY s.snapshotTime DESC")
+    List<ProductOrderSnapshot> findTopSnapshot();
 
 
 }

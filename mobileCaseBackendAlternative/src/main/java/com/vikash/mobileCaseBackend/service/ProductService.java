@@ -35,7 +35,7 @@ public class ProductService {
     AdminService adminService; // Assuming you have an AdminService for marking product availability
     @Autowired
     IProductOrderSnapshot repoProductOrderSnapshot;
-   
+
     @Autowired
     iRepoProductOrder productOrderRepository;
 
@@ -116,7 +116,7 @@ public class ProductService {
 
 
     public List<Product> availableAndLessThenEqualPrice(Type type,double price) {
-      return repoProduct.findProductAvailableByProductTypeAndProductPriceLessThanEqual(type,price);
+        return repoProduct.findProductAvailableByProductTypeAndProductPriceLessThanEqual(type,price);
 
     }
 
@@ -158,14 +158,14 @@ public class ProductService {
     public String updatePriceById(String email, String tokenValue, Integer id, IncreasOrDeacrease increasOrDeacrease, float discount) {
         if (authenticationService.authenticate(email, tokenValue)) {
 
-                int polarity =( increasOrDeacrease == IncreasOrDeacrease.INCREASE) ? 1:-1;
-                Product product= getProductById(id).orElseThrow() ;
-                double originalPrice = product.getProductPrice();
-                double priceAltering = originalPrice * (discount / 100) * polarity;;
-                double priceAfterAltering  = originalPrice + priceAltering;
-                String formattedPrice = String.format("%.2f", priceAfterAltering);
-                formattedPrice = formattedPrice.replace(',', '.');
-                product.setProductPrice(Double.parseDouble(formattedPrice));
+            int polarity =( increasOrDeacrease == IncreasOrDeacrease.INCREASE) ? 1:-1;
+            Product product= getProductById(id).orElseThrow() ;
+            double originalPrice = product.getProductPrice();
+            double priceAltering = originalPrice * (discount / 100) * polarity;;
+            double priceAfterAltering  = originalPrice + priceAltering;
+            String formattedPrice = String.format("%.2f", priceAfterAltering);
+            formattedPrice = formattedPrice.replace(',', '.');
+            product.setProductPrice(Double.parseDouble(formattedPrice));
             repoProduct.save(product);
 
 
@@ -320,26 +320,29 @@ public class ProductService {
 
 
 
-    @Scheduled(fixedRate = 30) // Run every 5 minutes
+
+
+    @Scheduled(fixedRate = 300) // Run every 5 minutes (300000 ms)
     @Transactional
     public void updateProductStock() {
         LocalDateTime currentExecutionTime = LocalDateTime.now();
 
-        // Fetch the last snapshot
-        List<ProductOrderSnapshot> lastSnapshots = repoProductOrderSnapshot.findBySnapshotTimeAfter(lastExecutionTime.minusMinutes(5));
+        // Fetch the most recent snapshot
+        List<ProductOrderSnapshot> lastSnapshots = repoProductOrderSnapshot.findTopSnapshot();
+        Map<Integer, Long> lastSnapshotMap = new HashMap<>();
+        if (lastSnapshots != null && !lastSnapshots.isEmpty()) {
+            for (ProductOrderSnapshot snapshot : lastSnapshots) {
+                lastSnapshotMap.put(snapshot.getProductId(), snapshot.getQuantity());
+            }
+        }
 
         // Fetch current product orders
         List<Object[]> currentProductOrders = productOrderRepository.findProductOrderQuantities();
 
-        // Create a map of last snapshots for easy comparison
-        Map<Integer, Long> lastSnapshotMap = new HashMap<>();
-        for (ProductOrderSnapshot snapshot : lastSnapshots) {
-            lastSnapshotMap.put(snapshot.getProductId(), snapshot.getQuantity());
-        }
-
         // Create snapshots for current product orders
         List<ProductOrderSnapshot> newSnapshots = new ArrayList<>();
         boolean hasChanges = false; // Flag to track if there are any changes
+
         for (Object[] result : currentProductOrders) {
             Integer productId = (Integer) result[0];
             Long quantity = (Long) result[1];
@@ -376,25 +379,23 @@ public class ProductService {
         if (hasChanges) {
             repoProductOrderSnapshot.saveAll(newSnapshots);
         }
+
         // Update the last execution time to the current time
         lastExecutionTime = currentExecutionTime;
     }
 
-
     public ResponseEntity<String> numberOfAvailableProducts(Integer productId, Integer count) {
 
+        Product product = repoProduct.findById(productId).orElseThrow();
+        Integer currentStock = product.getStock();
 
-            Product product = repoProduct.findById(productId).orElseThrow();
-            Integer currentStock = product.getStock();
-
-            if(count > currentStock ){
-                return new ResponseEntity<>("sorry we only have this many at the moment: " + currentStock, HttpStatus.BAD_REQUEST);
-            }
-            else {
-                return new ResponseEntity<>("sucssfull we have this many on hand", HttpStatus.OK);
-            }
+        if(count > currentStock ){
+            return new ResponseEntity<>("sorry we only have this many at the moment"+currentStock, HttpStatus.BAD_REQUEST);
         }
-
+        else {
+            return new ResponseEntity<>("sucessfull we have this many on hand", HttpStatus.OK);
+        }
+    }
 }
 
 
