@@ -7,6 +7,7 @@ import com.vikash.mobileCaseBackend.model.Product;
 import com.vikash.mobileCaseBackend.model.User;
 import com.vikash.mobileCaseBackend.repo.IAuthRepo;
 import com.vikash.mobileCaseBackend.repo.IRepoAdmin;
+import com.vikash.mobileCaseBackend.repo.IRepoProduct;
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
 import com.vikash.mobileCaseBackend.service.HashingUtility.PasswordEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,9 @@ public class AdminService {
     IAuthRepo authRepo;
 
     @Autowired
-    ProductService productService;
+    IRepoProduct iRepoProduct;
+
+
 
     public ResponseEntity<String> adminSgnOut(String token) {
 
@@ -127,9 +130,7 @@ public class AdminService {
         }
 
 
-   public List<Product> getProductsById(List<Integer> ids) {
-        return productService.getProductsById(ids);
-    }
+
 
     public ResponseEntity<Boolean> isAdminLoggedIn(String adminToken) {
 
@@ -162,5 +163,14 @@ public class AdminService {
             return new ResponseEntity<>(true,HttpStatus.OK);
         }
     }*/
+
+     void markProductUnavailable(Integer productId) {
+        Product product = iRepoProduct.findById(productId).orElse(null);
+        if (product != null) {
+            product.setProductAvailable(false);
+            iRepoProduct.save(product);
+            System.out.println("Product with ID " + productId + " marked as unavailable.");
+        }
+    }
 }
 

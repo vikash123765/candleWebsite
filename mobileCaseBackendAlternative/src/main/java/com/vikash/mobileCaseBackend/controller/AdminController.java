@@ -63,7 +63,7 @@ public class AdminController {
 
     @PostMapping("products/ids")
     public List<Product> getProductsByIds(@RequestBody List<Integer> ids){
-        return  adminService.getProductsById(ids);
+        return  productService.getProductsById(ids);
     }
 
 

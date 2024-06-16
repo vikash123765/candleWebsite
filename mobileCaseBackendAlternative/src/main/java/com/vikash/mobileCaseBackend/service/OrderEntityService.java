@@ -32,19 +32,16 @@ public class OrderEntityService {
 
 
     @Autowired
-    CartService cartService;
+    IAuthRepo authRepo;
+
 
     @Autowired
-    IAuthRepo authRepo;
+    iRepoProductOrder repoProductOrder;
 
 
     @Autowired
     SendMailOrderInfo sendMailOrderInfo;
 
-
-
-    @Autowired
-    iRepoProductOrder repoProductOrder;
 
 
     public List<Map<String, Object>> getOrderHistoryByUserEmail(String token) {
@@ -110,12 +107,19 @@ public class OrderEntityService {
 
             return orderList;
         }
-
-
         // If token is not valid or user not found, return empty list or handle accordingly
         return Collections.emptyList();
     }
-    
+
+        private boolean authorizeOrderHistoryAccesser(String email, List<OrderEntity> orderTobeAcessed) {
+        User potentialAccesser = repoUser.findByUserEmail(email);
+        for (OrderEntity order : orderTobeAcessed) {
+            if (order.getUser().getUserEmail().equals(potentialAccesser.getUserEmail())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 
 
@@ -303,7 +307,7 @@ public class OrderEntityService {
 
             // Send email notifications
             String userSubject = "Order Placed";
-            String userBody = "Your order has been placed. Thank you for shopping with us!, you will be notified once order is sent and provided with tracking id if that was your mode of delivery.";
+            String userBody = "Your order has been placed. Thank you for shopping with us!";
             sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
 
             String adminEmail = "vikash.kosaraju1234@gmail.com";
@@ -437,7 +441,7 @@ public class OrderEntityService {
 
             // Send email notifications
             String userSubject = "Guest Order Placed";
-            String userBody = "Your order has been placed. Thank you for shopping with us!, you will be notified once order is sent and provided with tracking id if that was your mode of delivery.";
+            String userBody = "Your guest order has been placed. Thank you for shopping with us!";
             sendMailOrderInfo.sendEmail(existingUser.getUserEmail(), userSubject, userBody, guestOrder);
 
             String adminEmail = "admin@example.com"; // Replace with your actual admin email
@@ -512,7 +516,6 @@ public class OrderEntityService {
 
         }
     }
-/*
 
     public ResponseEntity<Map<String, Object>>calcualteShippingCost(boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
         Map<String, Object> response = new HashMap<>();
@@ -581,11 +584,13 @@ public class OrderEntityService {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-*/
 
 
 
 
+
+
+    /*
 
     public ResponseEntity<Map<String, Object>>calcualteShippingCost (boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
 
@@ -655,7 +660,8 @@ public class OrderEntityService {
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+    }*/
+
 
  /*   private String generateOrFetchSessionToken(User savedGuestUser) {
         // Assuming you have a method to get the session token from the user or some other source
