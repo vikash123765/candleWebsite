@@ -388,10 +388,10 @@ public class ProductService {
             Integer currentStock = product.getStock();
 
             if(count > currentStock ){
-                return new ResponseEntity<>("sorry we only have this many at the moment"+currentStock, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("sorry we only have this many at the moment: " + currentStock, HttpStatus.BAD_REQUEST);
             }
             else {
-                return new ResponseEntity<>("sucessfull we have this many on hand", HttpStatus.OK);
+                return new ResponseEntity<>("sucssfull we have this many on hand", HttpStatus.OK);
             }
         }
 
