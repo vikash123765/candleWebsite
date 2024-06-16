@@ -34,14 +34,11 @@ public class Product {
     @Column(name="price")
     private double productPrice;
 
-    private Integer stock;
-
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> cartItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GuestCartItem> GuestCartItems = new ArrayList<>();
-
 
 
 
@@ -62,7 +59,5 @@ public class Product {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> users = new ArrayList<>();
-
-
 
 }

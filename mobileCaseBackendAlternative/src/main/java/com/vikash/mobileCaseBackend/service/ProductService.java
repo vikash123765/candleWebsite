@@ -3,20 +3,17 @@ package com.vikash.mobileCaseBackend.service;
 
 import com.vikash.mobileCaseBackend.model.OrderEntity;
 import com.vikash.mobileCaseBackend.model.Product;
-import com.vikash.mobileCaseBackend.model.ProductOrderSnapshot;
 import com.vikash.mobileCaseBackend.model.User;
 import com.vikash.mobileCaseBackend.model.enums.IncreasOrDeacrease;
 import com.vikash.mobileCaseBackend.model.enums.Type;
-import com.vikash.mobileCaseBackend.repo.*;
-import jakarta.transaction.Transactional;
+import com.vikash.mobileCaseBackend.repo.IRepoOrder;
+import com.vikash.mobileCaseBackend.repo.IRepoProduct;
+import com.vikash.mobileCaseBackend.repo.IRepoUser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductService {
@@ -31,16 +28,8 @@ public class ProductService {
 
     @Autowired
     IRepoUser iRepoUser;
-    @Autowired
-    AdminService adminService; // Assuming you have an AdminService for marking product availability
-    @Autowired
-    IProductOrderSnapshot repoProductOrderSnapshot;
-
-    @Autowired
-    iRepoProductOrder productOrderRepository;
 
 
-    private LocalDateTime lastExecutionTime = LocalDateTime.now();
 
     public String addProduct(String email, String tokenValue, Product productPost) {
 
@@ -116,7 +105,7 @@ public class ProductService {
 
 
     public List<Product> availableAndLessThenEqualPrice(Type type,double price) {
-        return repoProduct.findProductAvailableByProductTypeAndProductPriceLessThanEqual(type,price);
+      return repoProduct.findProductAvailableByProductTypeAndProductPriceLessThanEqual(type,price);
 
     }
 
@@ -158,14 +147,14 @@ public class ProductService {
     public String updatePriceById(String email, String tokenValue, Integer id, IncreasOrDeacrease increasOrDeacrease, float discount) {
         if (authenticationService.authenticate(email, tokenValue)) {
 
-            int polarity =( increasOrDeacrease == IncreasOrDeacrease.INCREASE) ? 1:-1;
-            Product product= getProductById(id).orElseThrow() ;
-            double originalPrice = product.getProductPrice();
-            double priceAltering = originalPrice * (discount / 100) * polarity;;
-            double priceAfterAltering  = originalPrice + priceAltering;
-            String formattedPrice = String.format("%.2f", priceAfterAltering);
-            formattedPrice = formattedPrice.replace(',', '.');
-            product.setProductPrice(Double.parseDouble(formattedPrice));
+                int polarity =( increasOrDeacrease == IncreasOrDeacrease.INCREASE) ? 1:-1;
+                Product product= getProductById(id).orElseThrow() ;
+                double originalPrice = product.getProductPrice();
+                double priceAltering = originalPrice * (discount / 100) * polarity;;
+                double priceAfterAltering  = originalPrice + priceAltering;
+                String formattedPrice = String.format("%.2f", priceAfterAltering);
+                formattedPrice = formattedPrice.replace(',', '.');
+                product.setProductPrice(Double.parseDouble(formattedPrice));
             repoProduct.save(product);
 
 
@@ -315,87 +304,6 @@ public class ProductService {
 
     }
 
-
-
-
-
-
-
-
-    @Scheduled(fixedRate = 300) // Run every 5 minutes (300000 ms)
-    @Transactional
-    public void updateProductStock() {
-        LocalDateTime currentExecutionTime = LocalDateTime.now();
-
-        // Fetch the most recent snapshot
-        List<ProductOrderSnapshot> lastSnapshots = repoProductOrderSnapshot.findTopSnapshot();
-        Map<Integer, Long> lastSnapshotMap = new HashMap<>();
-        if (lastSnapshots != null && !lastSnapshots.isEmpty()) {
-            for (ProductOrderSnapshot snapshot : lastSnapshots) {
-                lastSnapshotMap.put(snapshot.getProductId(), snapshot.getQuantity());
-            }
-        }
-
-        // Fetch current product orders
-        List<Object[]> currentProductOrders = productOrderRepository.findProductOrderQuantities();
-
-        // Create snapshots for current product orders
-        List<ProductOrderSnapshot> newSnapshots = new ArrayList<>();
-        boolean hasChanges = false; // Flag to track if there are any changes
-
-        for (Object[] result : currentProductOrders) {
-            Integer productId = (Integer) result[0];
-            Long quantity = (Long) result[1];
-
-            // Check if the quantity has changed compared to the last snapshot
-            Long lastQuantity = lastSnapshotMap.getOrDefault(productId, 0L);
-            Long changeInQuantity = quantity - lastQuantity;
-
-            if (changeInQuantity != 0) {
-                hasChanges = true; // Set the flag if there are changes
-                // Update stock based on the change in quantity
-                Product product = repoProduct.findById(productId).orElse(null);
-                if (product != null) {
-                    int updatedStock = product.getStock() - changeInQuantity.intValue();
-                    if (updatedStock < 0) {
-                        updatedStock = 0;
-                    }
-                    product.setStock(updatedStock);
-                    if (updatedStock <= 0) {
-                        product.setProductAvailable(false);
-                    }
-                    repoProduct.save(product);
-                }
-            }
-
-            // Save the new snapshot
-            ProductOrderSnapshot snapshot = new ProductOrderSnapshot();
-            snapshot.setProductId(productId);
-            snapshot.setQuantity(quantity);
-            snapshot.setSnapshotTime(currentExecutionTime);
-            newSnapshots.add(snapshot);
-        }
-
-        if (hasChanges) {
-            repoProductOrderSnapshot.saveAll(newSnapshots);
-        }
-
-        // Update the last execution time to the current time
-        lastExecutionTime = currentExecutionTime;
-    }
-
-    public ResponseEntity<String> numberOfAvailableProducts(Integer productId, Integer count) {
-
-        Product product = repoProduct.findById(productId).orElseThrow();
-        Integer currentStock = product.getStock();
-
-        if(count > currentStock ){
-            return new ResponseEntity<>("sorry we only have this many at the moment"+currentStock, HttpStatus.BAD_REQUEST);
-        }
-        else {
-            return new ResponseEntity<>("sucessfull we have this many on hand", HttpStatus.OK);
-        }
-    }
 }
 
 

@@ -39,13 +39,11 @@ public interface IRepoProduct extends JpaRepository<Product,Integer> {
 
  List<Product> findProductAvailableByProductName(String productName);
 
-
+ //List<Product> findProductAvailableByProductPriceLessThanEqual(double price);
  List<Product> findProductAvailableByProductTypeOrderByProductPriceDesc(Type type);
 
  List<Product> findProductAvailableByProductTypeOrderByProductPriceAsc(Type type);
 
 
  List<Product> findProductAvailableByProductTypeAndProductPriceLessThanEqual(Type type, double price);
-
-
 }

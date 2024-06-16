@@ -23,10 +23,10 @@ public class OrderEntity {
 
     private LocalDateTime creationTimeStamp;
 
-    // @JsonFormat(shape = JsonFormat.Shape.STRING)
+   // @JsonFormat(shape = JsonFormat.Shape.STRING)
     private boolean markAsSent;
 
-    // @JsonFormat(shape = JsonFormat.Shape.STRING)
+   // @JsonFormat(shape = JsonFormat.Shape.STRING)
     private boolean markAsDelivered;
 
 
@@ -45,7 +45,7 @@ public class OrderEntity {
     )
     private List<Product> products = new ArrayList<>();
 
-    // may need to delete
+  // may need to delete
     @ManyToMany
     @JoinTable(
             name = "user_order",
@@ -53,8 +53,5 @@ public class OrderEntity {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> users = new ArrayList<>();
-
-
-
 
 }

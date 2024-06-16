@@ -4,11 +4,9 @@ package com.vikash.mobileCaseBackend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vikash.mobileCaseBackend.model.AuthenticationToken;
-import com.vikash.mobileCaseBackend.model.PasswordResetToken;
 import com.vikash.mobileCaseBackend.model.User;
 import com.vikash.mobileCaseBackend.model.UserInfoDTO;
 import com.vikash.mobileCaseBackend.repo.IAuthRepo;
-import com.vikash.mobileCaseBackend.repo.IRepoPasswordResetToken;
 import com.vikash.mobileCaseBackend.repo.IRepoUser;
 
 import com.vikash.mobileCaseBackend.service.EmailUtility.MailHandlerBase;
@@ -25,7 +23,6 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class UserService {
@@ -38,8 +35,6 @@ public class UserService {
 
     @Autowired
     IAuthRepo iAuthRepo;
-
-
     /*  @Autowired
       MailHandlerBase mailHandlerBase;
 
@@ -67,7 +62,7 @@ public class UserService {
             newUser.setUserPassword(encryptedPass);
             userRepo.save(newUser);
             String email = newUser.getUserEmail();
-            MailHandlerBase.sendEmail(email, "user account created!", "congratulations you are have registered onVTS cases!!");
+            MailHandlerBase.sendEmail(email, "User account created!", "Congratulations your account is registered onVTS cases!!");
             Map<String, String> responseBody = Map.of("message", "account_created");
             return ResponseEntity.status(HttpStatus.CREATED).body(responseBody); // Using 201 Created status
 
@@ -149,6 +144,8 @@ public class UserService {
         if (actualToken == null) {
             return new ResponseEntity<>("User is not logged in", HttpStatus.NOT_FOUND);
         }
+
+
 
 
         if (actualToken.getUser() != null) {
@@ -254,9 +251,6 @@ public class UserService {
         return new ResponseEntity<>("Message was sent successfully", HttpStatus.OK);
     }
 
-}
-
-
 
 
 /*  public ResponseEntity<String> getUserToken(String userEmail) {
@@ -270,7 +264,7 @@ public class UserService {
           } return new ResponseEntity<>("there is not token value fr this email", HttpStatus.NOT_FOUND);
       }
   }*/
-
+}
 
 
 

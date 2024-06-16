@@ -39,7 +39,9 @@ public class PasswordService {
             iPasswordResetToken.save(passwordResetToken); // Save token to database
 
             // Send email with token
-            MailHandlerBase.sendEmail(userEmail, "Password Reset Token", token);
+            MailHandlerBase.sendEmail(userEmail, "MailHandlerBase.sendEmail(userEmail, \n" +
+                    "  \"Password Reset Token\\n\\nPlease use the token below along with your email address to reset your password. Once your request is verified, a temporary password will be sent to your email. You can then use the temporary password to log in and update your password in the profile section.\\n\\nToken: \" + token\n" +
+                    ");\n", token);
 
             return new ResponseEntity<>("Token was sent to your email. Please check.", HttpStatus.OK);
         } else {
@@ -61,13 +63,14 @@ public class PasswordService {
         }
 
         // Reset user's password to a temporary value (e.g., "null")
-        String temporaryPassword = "null";
+        String temporaryPassword = "12345678";
         String encryptedPass = PasswordEncryptor.encrypt(temporaryPassword);
         user.setUserPassword(encryptedPass);
         userRepo.save(user);
 
-        String message = "Your password has been reset to a temporary value ('null'). "
-                + "Please log in with this password and update it from your profile section.";
+
+        String message = "Your password has been reset to a temporary value = 12345678 "
+                + "Please log in with this password and update it any password from your profile section.";
 
         // Send email notification about password reset
         MailHandlerBase.sendEmail(email, "New Temporary Password", message);
