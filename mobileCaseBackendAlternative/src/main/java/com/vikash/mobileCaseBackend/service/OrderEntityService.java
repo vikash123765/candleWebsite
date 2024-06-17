@@ -196,142 +196,150 @@ public class OrderEntityService {
     }
 
 
-  /*  public String finalizeOrder(String email, String token) {
-        if (authenticationService.authenticate(email, token)) {
-            User user = repoUser.findByUserEmail(email);
-            Cart cart = cartService.getCartByUser(user);
-            List<CartItem> cartItems = cart.getCartItems();
-
-            // Check if the cart has items
-            if (cartItems.isEmpty()) {
-                return "Cart is empty. Cannot finalize order.";
-            }
-
-            // Create and populate an OrderEntity
-            OrderEntity order = new OrderEntity();
-            order.setUser(user);
-            order.setCreationTimeStamp(LocalDateTime.now());
-
-            // Save the order to the database first
-            repoOrder.save(order);
-
-            // Create a separate list to collect products
-            List<Product> productsToUpdate = new ArrayList<>();
-
-            // Retrieve the products from the cart items
-            for (CartItem cartItem : cartItems) {
-                Product orderProduct = cartItem.getProduct();
-
-                // Set the product's orderEntity reference to the saved order
-                orderProduct.getOrders().add(order);
-                productsToUpdate.add(orderProduct);
-            }
-
-            // Save all products after modifying relationships
-            repoProduct.saveAll(productsToUpdate);
-
-            // Update the user's orders outside the loop
-            user.getOrders().add(order);
-            repoUser.save(user);
-
-            // Optionally mark the cart as having the order placed
-            cart.setOrderPlaced(true);
-            repoCart.save(cart);
-
-            // booleam check
-
-            // Reset the user's cart after the order is finalized
-            cartService.resetCart(user);
-
-            // Send email notifications
-            String userSubject = "Order Placed";
-            String userBody = "Your order has been placed. Thank you for shopping with us!";
-            sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
-
-            String adminEmail = "vikash.kosaraju1234@gmail.com"; // Replace with your actual admin email
-            String adminSubject = "New Order Placed";
-            String adminBody = "A new order has been placed. Order Number: " + order.getOrderNumber();
-            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, order);
-
-            return "Order finalized successfully!";
-        } else {
-            return "Unauthorized access";
-        }
-    }*/
-
-
     public ResponseEntity<String> finalizeOrder(String token, String jsonPayload) {
         if (authenticationService.authenticateUserLoggedIn(token)) {
-            AuthenticationToken tokenObj = authRepo.findByTokenValue(token);
-            User user = tokenObj.getUser();
-
-            // Parse the JSON payload into a List of product IDs
-            List<Integer> productIds;
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {});
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Error parsing JSON payload", e);
+                AuthenticationToken tokenObj = authRepo.findByTokenValue(token);
+                User user = tokenObj.getUser();
+
+                System.out.println("User authenticated successfully: " + user.getUserName());
+
+                // Fetch initial product quantities
+                Map<Integer, Integer> initialQuantities = new HashMap<>();
+                List<Object[]> initialResults = repoProductOrder.findProductOrderQuantitiesGroupedByProductId();
+                System.out.println("Initial results size: " + initialResults.size());
+                for (Object[] result : initialResults) {
+                    Integer productId = (Integer) result[0];
+                    Long quantity = (Long) result[1]; // Assuming quantity is Long (COUNT result)
+                    initialQuantities.put(productId, quantity != null ? quantity.intValue() : 0);
+                    System.out.println("Initial - ProductId: " + productId + ", Quantity: " + quantity);
+                }
+                // Parse the JSON payload into a List of product IDs
+                List<Integer> productIds;
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {});
+                    System.out.println("Parsed product IDs from JSON payload: " + productIds);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException("Error parsing JSON payload", e);
+                }
+
+                // Create and populate an OrderEntity
+                OrderEntity order = new OrderEntity();
+                order.setUser(user);
+                order.setCreationTimeStamp(LocalDateTime.now());
+
+                // Save the order to the database
+                repoOrder.save(order);
+                System.out.println("Order saved successfully: " + order.getOrderNumber());
+
+                // Retrieve products by productIds and create associations with the order
+                for (Integer productId : productIds) {
+                    Product product = repoProduct.findById(productId)
+                            .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
+
+                    // Add the product to the order's products list
+                    order.getProducts().add(product);
+                    System.out.println("Product added to order - ProductId: " + productId + ", ProductName: " + product.getProductName());
+                }
+
+                // Save the order with associated products
+                repoOrder.save(order);
+                System.out.println("Order updated with associated products");
+
+                // Update the user's orders
+                user.getOrders().add(order);
+                repoUser.save(user);
+                System.out.println("User updated with new order");
+
+                // Fetch final product quantities after associating products
+                Map<Integer, Integer> finalQuantities = new HashMap<>();
+                List<Object[]> finalResults = repoProductOrder.findProductOrderQuantitiesGroupedByProductId();
+                System.out.println("Final results size: " + finalResults.size());
+                for (Object[] result : finalResults) {
+                    Integer productId = (Integer) result[0];
+                    Long quantity = (Long) result[1]; // Assuming quantity is Long (COUNT result)
+                    finalQuantities.put(productId, quantity != null ? quantity.intValue() : 0);
+                    System.out.println("Final - ProductId: " + productId + ", Quantity: " + quantity);
+                }
+
+                // Update product stock based on differences
+                for (Integer productId : finalQuantities.keySet()) {
+                    Integer finalQuantity = finalQuantities.getOrDefault(productId, 0);
+                    Integer initialQuantity = initialQuantities.getOrDefault(productId, 0);
+                    Integer changeInQuantity = finalQuantity - initialQuantity;
+
+                    if (changeInQuantity > 0) {
+                        Product product = repoProduct.findById(productId).orElse(null);
+                        if (product != null) {
+                            int updatedStock = product.getStock() - changeInQuantity;
+                            if (updatedStock < 0) {
+                                updatedStock = 0;
+                            }
+                            product.setStock(updatedStock);
+                            if (updatedStock <= 0) {
+                                product.setProductAvailable(false);
+                            }
+                            repoProduct.save(product);
+                            System.out.println("Product stock updated - ProductId: " + productId + ", Updated Stock: " + updatedStock);
+                        }
+                    }
+                }
+
+                // Send email notifications
+                String userSubject = "Order Placed";
+                String userBody = "Your order has been placed. Thank you for shopping with us!";
+                sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
+
+                String adminEmail = "vikash.kosaraju1234@gmail.com";
+                String adminSubject = "New Order Placed";
+                String adminBody = "A new order has been placed. Order Number: " + order.getOrderNumber();
+                sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, order);
+
+                return new ResponseEntity<>("Order finalized successfully!", HttpStatus.OK);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new ResponseEntity<>("Error processing order: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
-            // Create and populate an OrderEntity
-            OrderEntity order = new OrderEntity();
-            order.setUser(user);
-            order.setCreationTimeStamp(LocalDateTime.now());
-
-            // Save the order to the database
-            repoOrder.save(order);
-
-            // Retrieve products by productIds and create associations with the order
-            for (Integer productId : productIds) {
-                Product product = repoProduct.findById(productId)
-                        .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
-
-                // Add the product to the order's products list
-                order.getProducts().add(product);
-            }
-
-            // Save the order with associated products
-
-            repoOrder.save(order);
-
-            // Update the user's orders
-            user.getOrders().add(order);
-
-            // i need a boolean check here to only save if payment is sucessfull 
-            repoUser.save(user);
-
-            // Send email notifications
-            String userSubject = "Order Placed";
-            String userBody = "Your order has been placed. Thank you for shopping with us!, you will be notified once order is sent and provided with tracking id if that was your mode of delivery.";
-            sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
-
-            String adminEmail = "vikash.kosaraju1234@gmail.com";
-            String adminSubject = "New Order Placed";
-            String adminBody = "A new order has been placed. Order Number: " + order.getOrderNumber();
-            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, order);
-
-            return new ResponseEntity<>( "Order finalized successfully!",HttpStatus.OK);
         } else {
-            return  new ResponseEntity<>("Unauthorized access",HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("Unauthorized access", HttpStatus.UNAUTHORIZED);
         }
     }
 
 
+    public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest, String jsonPayload) {
+        String passedEmail = guestOrderRequest.getEmail();
 
+        // Check if the user with the provided email already exists
+        User user = repoUser.findByUserEmail(passedEmail);
 
+        if (user == null) {
+            // User doesn't exist, proceed with creating a new guest user
+            user = new User();
+            user.setUserName(guestOrderRequest.getUserName());
+            user.setUserEmail(guestOrderRequest.getEmail());
+            user.setAddress(guestOrderRequest.getShippingAddress());
+            user.setPhoneNumber(guestOrderRequest.getPhoneNumber());
 
+            // Save the new guest user to the database
+            user = repoUser.save(user);
+        } else {
+            // Update the existing user's details
+            user.setAddress(guestOrderRequest.getShippingAddress());
+            user.setPhoneNumber(guestOrderRequest.getPhoneNumber());
+            repoUser.save(user);
+        }
 
-  /*  public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest) {
-        // Create a new guest user
-        User guestUser = new User();
-        guestUser.setUserName(guestOrderRequest.getUserName());
-        guestUser.setUserEmail(guestOrderRequest.getEmail());
-        guestUser.setAddress(guestOrderRequest.getShippingAddress());
-        guestUser.setPhoneNumber(guestOrderRequest.getPhoneNumber());
-
-        // Save the guest user to the database
-        User savedGuestUser = repoUser.save(guestUser);
+        // Fetch initial product quantities
+        Map<Integer, Integer> initialQuantities = new HashMap<>();
+        List<Object[]> initialResults = repoProductOrder.findProductOrderQuantitiesGroupedByProductId();
+        System.out.println("Initial results size: " + initialResults.size());
+        for (Object[] result : initialResults) {
+            Integer productId = (Integer) result[0];
+            Long quantity = (Long) result[1]; // Assuming quantity is Long (COUNT result)
+            initialQuantities.put(productId, quantity != null ? quantity.intValue() : 0);
+            System.out.println("Initial - ProductId: " + productId + ", Quantity: " + quantity);
+        }
 
         // Create and populate a GuestOrderEntity
         OrderEntity guestOrder = new OrderEntity();
@@ -339,179 +347,81 @@ public class OrderEntityService {
         guestOrder.setMarkAsDelivered(false);
         guestOrder.setCreationTimeStamp(LocalDateTime.now());
 
-        // Link the guest order with the guest user
-        guestOrder.setUser(savedGuestUser);
+        // Link the guest order with the user
+        guestOrder.setUser(user);
 
         // Save the order to the database
         repoOrder.save(guestOrder);
 
-        // Retrieve the products from the guest cart items
-       // GuestCart guestCart = iRepoGuestCart.findById(guestCartId).orElse(null);
-        // Generate or fetch session token internally (pseudo code, you'll need to implement this)
-        String sessionToken = generateOrFetchSessionToken(savedGuestUser);
-        GuestCart guestCart = iRepoGuestCart.findBySessionToken(sessionToken);
-        if (guestCart != null) {
-            List<GuestCartItem> guestCartItems = guestCart.getGuestCartItems();
-
-            for (GuestCartItem guestCartItem : guestCartItems) {
-                Product orderProduct = guestCartItem.getProduct();
-
-                // Link the product with the guest order
-                orderProduct.getOrders().add(guestOrder);
-                // Link the product with the guest user
-                orderProduct.getUsers().add(savedGuestUser);
-
-                // Save the product to associate it with the new order
-                repoProduct.save(orderProduct);
-            }
-
-            // Link the guest order with the guest user's orders
-            savedGuestUser.getOrders().add(guestOrder);
-            repoUser.save(savedGuestUser);
-
-            // Clear the guest cart items
-            guestCartItems.clear();
-            iRepoGuestCartItem.deleteAll(guestCartItems);
-
-            // Send email notifications
-            String userSubject = "Guest Order Placed";
-            String userBody = "Your guest order has been placed. Thank you for shopping with us!";
-            sendMailOrderInfo.sendEmail(savedGuestUser.getUserEmail(), userSubject, userBody, guestOrder);
-
-            String adminEmail = "admin@example.com"; // Replace with your actual admin email
-            String adminSubject = "New Guest Order Placed";
-            String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
-            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
-
-            return "Guest order finalized successfully!";
-        } else {
-            return "Guest cart not found. Order finalization failed.";
+        // Parse the JSON payload into a List of product IDs
+        List<Integer> productIds;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {});
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error parsing JSON payload", e);
         }
-    }*/
 
-    public String finalizeGuestOrder(GuestOrderRequest guestOrderRequest, String jsonPayload) {
-        String passedEmail = guestOrderRequest.getEmail();
+        // Retrieve products by productIds and create associations with the order
+        for (Integer productId : productIds) {
+            Product product = repoProduct.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
 
-        // Check if the user with the provided email already exists
-        User existingUser = repoUser.findByUserEmail(passedEmail);
-
-
-        if (existingUser != null) {
-            // User already exists, link the existing user with the new order and products
-
-
-            // Create and populate a GuestOrderEntity
-            OrderEntity guestOrder = new OrderEntity();
-            guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
-            guestOrder.setMarkAsDelivered(false);
-            guestOrder.setCreationTimeStamp(LocalDateTime.now());
-
-            // Link the guest order with the existing user
-            guestOrder.setUser(existingUser);
-
-            // Save the order to the database
-            repoOrder.save(guestOrder);
-
-            // Parse the JSON payload into a List of product IDs
-            List<Integer> productIds;
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {
-                });
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Error parsing JSON payload", e);
-            }
-
-            // Retrieve products by productIds and create associations with the order
-            for (Integer productId : productIds) {
-                Product product = repoProduct.findById(productId)
-                        .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
-
-                // Add the product to the order's products list
-                guestOrder.getProducts().add(product);
-            }
-
-            // Update the user's orders
-            existingUser.getOrders().add(guestOrder);
-            repoUser.save(existingUser);
-
-            // Send email notifications
-            String userSubject = "Guest Order Placed";
-            String userBody = "Your order has been placed. Thank you for shopping with us!, you will be notified once order is sent and provided with tracking id if that was your mode of delivery.";
-            sendMailOrderInfo.sendEmail(existingUser.getUserEmail(), userSubject, userBody, guestOrder);
-
-            String adminEmail = "admin@example.com"; // Replace with your actual admin email
-            String adminSubject = "New Guest Order Placed";
-            String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
-            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
-
-            return "Guest order finalized successfully!";
-
-
-        } else {
-
-            // Create a new guest user
-            // User doesn't exist, proceed with creating a new guest user and order
-            User guestUser = new User();
-            guestUser.setUserName(guestOrderRequest.getUserName());
-            guestUser.setUserEmail(guestOrderRequest.getEmail());
-            guestUser.setAddress(guestOrderRequest.getShippingAddress());
-            guestUser.setPhoneNumber(guestOrderRequest.getPhoneNumber());
-
-            // Save the guest user to the database
-            User savedGuestUser = repoUser.save(guestUser);
-
-            // Create and populate a GuestOrderEntity
-            OrderEntity guestOrder = new OrderEntity();
-            guestOrder.setMarkAsSent(false); // Set default values for other order-related fields
-            guestOrder.setMarkAsDelivered(false);
-            guestOrder.setCreationTimeStamp(LocalDateTime.now());
-
-            // Link the guest order with the guest user
-            guestOrder.setUser(savedGuestUser);
-
-            // Save the order to the database
-            repoOrder.save(guestOrder);
-
-            // Parse the JSON payload into a List of product IDs
-            List<Integer> productIds;
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                productIds = objectMapper.readValue(jsonPayload, new TypeReference<List<Integer>>() {
-                });
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Error parsing JSON payload", e);
-            }
-
-            // Retrieve products by productIds and create associations with the order
-            for (Integer productId : productIds) {
-                Product product = repoProduct.findById(productId)
-                        .orElseThrow(() -> new RuntimeException("Product not found for ID: " + productId));
-
-                // Add the product to the order's products list
-                guestOrder.getProducts().add(product);
-            }
-
-            // Update the user's orders
-            savedGuestUser.getOrders().add(guestOrder);
-            repoUser.save(savedGuestUser);
-
-            // Send email notifications and other necessary actions...
-            // Send email notifications
-            String userSubject = "Guest Order Placed";
-            String userBody = "Your guest order has been placed. Thank you for shopping with us!";
-            sendMailOrderInfo.sendEmail(savedGuestUser.getUserEmail(), userSubject, userBody, guestOrder);
-
-            String adminEmail = "admin@example.com"; // Replace with your actual admin email
-            String adminSubject = "New Guest Order Placed";
-            String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
-            sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
-
-            return "Guest order finalized successfully!";
-
-
+            // Add the product to the order's products list
+            guestOrder.getProducts().add(product);
         }
+
+        // Update the user's orders
+        user.getOrders().add(guestOrder);
+        repoUser.save(user);
+
+        // Fetch final product quantities after associating products
+        Map<Integer, Integer> finalQuantities = new HashMap<>();
+        List<Object[]> finalResults = repoProductOrder.findProductOrderQuantitiesGroupedByProductId();
+        System.out.println("Final results size: " + finalResults.size());
+        for (Object[] result : finalResults) {
+            Integer productId = (Integer) result[0];
+            Long quantity = (Long) result[1]; // Assuming quantity is Long (COUNT result)
+            finalQuantities.put(productId, quantity != null ? quantity.intValue() : 0);
+            System.out.println("Final - ProductId: " + productId + ", Quantity: " + quantity);
+        }
+
+        // Update product stock based on differences
+        for (Integer productId : finalQuantities.keySet()) {
+            Integer finalQuantity = finalQuantities.getOrDefault(productId, 0);
+            Integer initialQuantity = initialQuantities.getOrDefault(productId, 0);
+            Integer changeInQuantity = finalQuantity - initialQuantity;
+
+            if (changeInQuantity > 0) {
+                Product product = repoProduct.findById(productId).orElse(null);
+                if (product != null) {
+                    int updatedStock = product.getStock() - changeInQuantity;
+                    if (updatedStock < 0) {
+                        updatedStock = 0;
+                    }
+                    product.setStock(updatedStock);
+                    if (updatedStock <= 0) {
+                        product.setProductAvailable(false);
+                    }
+                    repoProduct.save(product);
+                    System.out.println("Product stock updated - ProductId: " + productId + ", Updated Stock: " + updatedStock);
+                }
+            }
+        }
+
+        // Send email notifications
+        String userSubject = "Guest Order Placed";
+        String userBody = "Your guest order has been placed. Thank you for shopping with us!";
+        sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, guestOrder);
+
+        String adminEmail = "admin@example.com"; // Replace with your actual admin email
+        String adminSubject = "New Guest Order Placed";
+        String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
+        sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);
+
+        return "Guest order finalized successfully!";
     }
+
 /*
 
     public ResponseEntity<Map<String, Object>>calcualteShippingCost(boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {

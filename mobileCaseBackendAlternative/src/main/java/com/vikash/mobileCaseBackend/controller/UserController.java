@@ -225,6 +225,11 @@ public class UserController {
         return passwordService.resetPassword(token,email);
     }
 
+    @GetMapping("addToCartLimit")
+    public ResponseEntity<String>numberOfAvailableProducts(@RequestHeader("productId") Integer productId, @RequestHeader("count") Integer count){
+        return productService.numberOfAvailableProducts(productId,count);
+
+    }
 
 
 

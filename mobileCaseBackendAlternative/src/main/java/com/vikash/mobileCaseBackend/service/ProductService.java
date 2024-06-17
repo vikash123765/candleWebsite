@@ -10,6 +10,8 @@ import com.vikash.mobileCaseBackend.repo.IRepoOrder;
 import com.vikash.mobileCaseBackend.repo.IRepoProduct;
 import com.vikash.mobileCaseBackend.repo.IRepoUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -302,8 +304,21 @@ public class ProductService {
         }
 
 
+
+
     }
 
+    public ResponseEntity<String> numberOfAvailableProducts(Integer productId, Integer count) {
+        Product product = repoProduct.findById(productId).orElseThrow();
+        Integer currentStock = product.getStock();
+
+        if(count > currentStock ){
+            return new ResponseEntity<>("sorry we only have this many at the moment" + currentStock, HttpStatus.BAD_REQUEST);
+        }
+        else {
+            return new ResponseEntity<>("sucessfull we have this many on hand", HttpStatus.OK);
+        }
+    }
 }
 
 

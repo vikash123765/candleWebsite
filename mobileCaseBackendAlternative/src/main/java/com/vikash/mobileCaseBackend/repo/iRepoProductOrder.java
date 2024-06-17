@@ -15,4 +15,10 @@ public interface iRepoProductOrder extends JpaRepository<ProductOrder,Integer> {
             "WHERE po.orders.orderNumber = :orderId " +
             "GROUP BY po.product.productId, po.orders.orderNumber")
     List<Object[]> findProductOrderQuantities(@Param("orderId") Integer orderId);
+
+
+    @Query("SELECT po.product.id as productId, COUNT(po) as totalQuantity " +
+            "FROM ProductOrder po " +
+            "GROUP BY po.product.id")
+    List<Object[]> findProductOrderQuantitiesGroupedByProductId();
 }
