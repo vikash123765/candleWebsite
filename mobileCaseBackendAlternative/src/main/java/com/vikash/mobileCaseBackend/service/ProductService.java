@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Optional;
@@ -308,17 +310,23 @@ public class ProductService {
 
     }
 
-    public ResponseEntity<String> numberOfAvailableProducts(Integer productId, Integer count) {
+    @PostMapping("/addToCartLimit")
+    public ResponseEntity<String> numberOfAvailableProducts(@RequestParam Integer productId, @RequestParam Integer count) {
         Product product = repoProduct.findById(productId).orElseThrow();
         Integer currentStock = product.getStock();
 
-        if(count > currentStock ){
-            return new ResponseEntity<>("sorry we only have this many at the moment" + currentStock, HttpStatus.BAD_REQUEST);
+        if (count > currentStock) {
+
+            return new ResponseEntity<>("Sorry, only " + currentStock + " available at the moment.", HttpStatus.BAD_REQUEST);
+        } else if (count <= currentStock) {
+
+            return new ResponseEntity<>("fine operation", HttpStatus.OK);
         }
-        else {
-            return new ResponseEntity<>("sucessfull we have this many on hand", HttpStatus.OK);
-        }
+
+
+        return new ResponseEntity<>("profduct do not exisst",HttpStatus.NOT_FOUND);
     }
+
 }
 
 
