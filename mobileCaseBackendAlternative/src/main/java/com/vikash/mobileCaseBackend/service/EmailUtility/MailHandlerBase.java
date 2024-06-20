@@ -7,8 +7,8 @@ import javax.mail.internet.MimeMessage;
 
 public class MailHandlerBase {
 
-    private static final String EMAIL_USERNAME = "vikash.kosaraju1234@gmail.com";  //have to chnage to vtscases mail because now sender will be me
-    private static final String EMAIL_PASSWORD = "wffu jvky tjow ozji"; //  change  // fill your own app password
+    private static final String EMAIL_USERNAME = "vtscases.buissness@gmail.com";  //have to chnage to vtscases mail because now sender will be me
+    private static final String EMAIL_PASSWORD = "smnw prmr ouei zpgx"; //  change  // fill your own app password
 
     public static boolean sendEmail(String toEmail, String subject, String body) {
         Properties properties = new Properties();
