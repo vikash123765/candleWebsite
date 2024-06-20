@@ -291,7 +291,7 @@ public class OrderEntityService {
                 String userBody = "Your order has been placed. Thank you for shopping with us!";
                 sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, order);
 
-                String adminEmail = "vikash.kosaraju1234@gmail.com";
+                String adminEmail = "vts.cases.ad@gmail.com";
                 String adminSubject = "New Order Placed";
                 String adminBody = "A new order has been placed. Order Number: " + order.getOrderNumber();
                 sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, order);
@@ -414,7 +414,7 @@ public class OrderEntityService {
         String userBody = "Your guest order has been placed. Thank you for shopping with us!";
         sendMailOrderInfo.sendEmail(user.getUserEmail(), userSubject, userBody, guestOrder);
 
-        String adminEmail = "admin@example.com"; // Replace with your actual admin email
+        String adminEmail = "vts.cases.ad@gmail.com"; // Replace with your actual admin email
         String adminSubject = "New Guest Order Placed";
         String adminBody = "A new guest order has been placed. Order Number: " + guestOrder.getOrderNumber();
         sendMailOrderInfo.sendEmail(adminEmail, adminSubject, adminBody, guestOrder);

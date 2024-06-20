@@ -216,7 +216,7 @@ public class UserService {
 
             String senderEmail = tokenObj.getUser().getUserEmail();
 
-            String adminEmail = "vikash.kosaraju1234@gmail.com";
+            String adminEmail = "vts.cases.ad@gmail.com";
             JSONObject messageObj = new JSONObject(message);
             String messageContent = messageObj.getString("message");
 
@@ -237,7 +237,7 @@ public class UserService {
     }
 
     public ResponseEntity<String> guestCustomerService(String subject, String senderEmail, String message) {
-        String adminEmail = "vikash.kosaraju1234@gmail.com";
+        String adminEmail = "vts.cases.ad@gmail.com";
         // Parse the JSON message to extract the message content
         JSONObject messageObj = new JSONObject(message);
         String messageContent = messageObj.getString("message");
