@@ -28,8 +28,8 @@ public class SendMailOrderInfo {
     iRepoProductOrder iRepoProductOrder;
 
     public void sendEmail(String to, String subject, String body, OrderEntity order) {
-        final String username = "vikash.kosaraju1234@gmail.com";
-        final String password = "wffu jvky tjow ozji"; // Use your App Password if 2FA is enabled
+        final String username = "vtscases.buissness@gmail.com";
+        final String password = "smnw prmr ouei zpgx"; // Use your App Password if 2FA is enabled
 
 
 
