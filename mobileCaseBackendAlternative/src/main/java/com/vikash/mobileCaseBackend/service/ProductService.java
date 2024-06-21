@@ -314,11 +314,14 @@ public class ProductService {
     public ResponseEntity<String> numberOfAvailableProducts(@RequestParam Integer productId, @RequestParam Integer count) {
         Product product = repoProduct.findById(productId).orElseThrow();
         Integer currentStock = product.getStock();
+        if(currentStock <= 0 ) {
+            product.setProductAvailable(false);
 
-        if (count > currentStock) {
 
+        } else if (count > currentStock) {
             return new ResponseEntity<>("Sorry, only " + currentStock + " available at the moment.", HttpStatus.BAD_REQUEST);
-        } else if (count <= currentStock) {
+        }
+        else if (count <= currentStock) {
 
             return new ResponseEntity<>("fine operation", HttpStatus.OK);
         }
