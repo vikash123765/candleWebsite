@@ -401,7 +401,7 @@ public class OrderEntityService {
                     }
                     product.setStock(updatedStock);
                     if (updatedStock <= 0) {
-                        product.setProductAvailable(false);
+                        product.setProductAvailable(false);  // remove if you still want the card available
                     }
                     repoProduct.save(product);
                     System.out.println("Product stock updated - ProductId: " + productId + ", Updated Stock: " + updatedStock);

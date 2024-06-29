@@ -23,8 +23,9 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer productId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "product_type")
-    private String productType;
+    private Type productType;
 
     private String productName;
     @Column(length = 1000)

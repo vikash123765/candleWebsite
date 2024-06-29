@@ -32,6 +32,8 @@ public class User  {
     //@Size(min = 8)
     //@Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@$!%*?&#])[A-Z][A-Za-z0-9@$!%*?&#]+$", message = "password is not strong enough!!!")
     private String userPassword; //regex for strong password
+
+    @Column(length = 20)  // Adjust the length as necessary
     @Enumerated(EnumType.STRING)
     private Gender gender;
 

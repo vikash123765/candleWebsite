@@ -315,7 +315,7 @@ public class ProductService {
         Product product = repoProduct.findById(productId).orElseThrow();
         Integer currentStock = product.getStock();
         if(currentStock <= 0 ) {
-            product.setProductAvailable(false);
+            product.setProductAvailable(false);   // rmeove if still want to display the card but instead as sold out
 
 
         } else if (count > currentStock) {
