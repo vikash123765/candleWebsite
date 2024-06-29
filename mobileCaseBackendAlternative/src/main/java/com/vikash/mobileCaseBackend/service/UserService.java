@@ -41,7 +41,7 @@ public class UserService {
   */
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ResponseEntity<Map<String, String>> userSignUp(User newUser) throws JsonProcessingException {
+    public ResponseEntity<Map<String, String>> userSignUp(User newUser) throws JsonProcessingException, NoSuchAlgorithmException {
         // Check if user already exists
         String newEmail = newUser.getUserEmail();
         User ifExistUser = userRepo.findByUserEmail(newEmail);
@@ -52,8 +52,20 @@ public class UserService {
             }
 
             if (ifExistUser.getUserEmail() != null) {
-                Map<String, String> responseBody = Map.of("message", "guest_user");
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(responseBody);
+
+                String currentPassword = newUser.getUserPassword();
+                String encryptedPass = PasswordEncryptor.encrypt(currentPassword);
+                ifExistUser.setPhoneNumber(newUser.getPhoneNumber());
+                ifExistUser.setUserEmail(ifExistUser.getUserEmail());
+                ifExistUser.setUserName(newUser.getUserName());
+                ifExistUser.setUserPassword(encryptedPass);
+                ifExistUser.setAddress(newUser.getAddress());
+                ifExistUser.setGender(newUser.getGender());
+
+                userRepo.save(ifExistUser);
+
+                Map<String, String> responseBody = Map.of("message", "account_created");
+                return ResponseEntity.status(HttpStatus.CREATED).body(responseBody); // Using 201 Created status
             }
         }
         String currentPassword = newUser.getUserPassword();
@@ -62,7 +74,7 @@ public class UserService {
             newUser.setUserPassword(encryptedPass);
             userRepo.save(newUser);
             String email = newUser.getUserEmail();
-            MailHandlerBase.sendEmail(email, "User account created!", "Congratulations your account is registered onVTS cases!!");
+            MailHandlerBase.sendEmail(email, "user account created!", "congratulations you are have registered onVTS cases!!");
             Map<String, String> responseBody = Map.of("message", "account_created");
             return ResponseEntity.status(HttpStatus.CREATED).body(responseBody); // Using 201 Created status
 
@@ -72,6 +84,7 @@ public class UserService {
 
         }
     }
+
 
 
     public ResponseEntity<String> userSignIn(String email, String password) {

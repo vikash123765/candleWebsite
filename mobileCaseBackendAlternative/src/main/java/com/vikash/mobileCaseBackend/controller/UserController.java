@@ -43,7 +43,7 @@ public class UserController {
 
     // user sign up
     @PostMapping("user/signUp")
-    public ResponseEntity<Map<String, String>> userSignUp(@Valid @RequestBody User newUser) throws JsonProcessingException {
+    public ResponseEntity<Map<String, String>> userSignUp(@Valid @RequestBody User newUser) throws JsonProcessingException, NoSuchAlgorithmException {
         return userService.userSignUp(newUser);
     }
 
