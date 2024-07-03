@@ -31,8 +31,7 @@ public class OrderEntityService {
     AuthService authenticationService;
 
 
-    @Autowired
-    CartService cartService;
+
 
     @Autowired
     IAuthRepo authRepo;
@@ -422,7 +421,7 @@ public class OrderEntityService {
         return "Guest order finalized successfully!";
     }
 
-/*
+
 
     public ResponseEntity<Map<String, Object>>calcualteShippingCost(boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
         Map<String, Object> response = new HashMap<>();
@@ -491,10 +490,11 @@ public class OrderEntityService {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-*/
 
 
 
+
+/*
 
 
     public ResponseEntity<Map<String, Object>>calcualteShippingCost (boolean isSweden, boolean isEurope, boolean isTraceable, boolean isNonTraceable, double packageWeight) {
@@ -567,45 +567,8 @@ public class OrderEntityService {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
- /*   private String generateOrFetchSessionToken(User savedGuestUser) {
-        // Assuming you have a method to get the session token from the user or some other source
-        String sessionToken = generateSessionTokenForUser(savedGuestUser); // Implement this method as needed
+*/
 
-        // Check if a guest cart with this session token already exists
-        GuestCart existingGuestCart = iRepoGuestCart.findBySessionToken(sessionToken);
-
-        if (existingGuestCart != null) {
-            // If a session token already exists, return it
-            return existingGuestCart.getSessionToken();
-        } else {
-            // Generate a new session token using UUID
-            String newSessionToken = UUID.randomUUID().toString();
-
-            // Create a new GuestCart entity
-            GuestCart newGuestCart = new GuestCart();
-            newGuestCart.setSessionToken(newSessionToken);
-            newGuestCart.setOrderPlaced(false); // Assuming this is the default state
-
-            // Link the guest user with the guest cart
-            newGuestCart.getUsers().add(savedGuestUser);  // Ensure the method exists to add user to guest cart
-
-            // Save the GuestCart to associate the session token with the guest user
-            iRepoGuestCart.save(newGuestCart);
-
-            return newSessionToken;
-        }
-    }
-
-    private String generateSessionTokenForUser(User savedGuestUser) {
-        // Generate a unique session token using UUID
-        return UUID.randomUUID().toString();
-    }
-    */
-       
-
-/*    private boolean checkPaymentStatus() {
-
-    }*/
 }
 
 
