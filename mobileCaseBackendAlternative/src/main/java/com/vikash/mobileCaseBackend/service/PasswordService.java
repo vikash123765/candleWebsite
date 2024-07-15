@@ -39,7 +39,7 @@ public class PasswordService {
             iPasswordResetToken.save(passwordResetToken); // Save token to database
 
             // Send email with token
-            MailHandlerBase.sendEmail(userEmail, "Password Reset Token","Please use the token below along with your email address to reset your password. Once your request is verified, a temporary password will be sent to your email. You can then use the temporary password to log in and update your password in the profile section.\\n\\nToken: \" + token\n" + token);
+            MailHandlerBase.sendEmail(userEmail, "Password Reset Token","Please use the token below along with your email address to reset your password. Once your request is verified, a temporary password will be sent to your email. You can then use the temporary password to log in and update your password in the profile section. Token: " + token);
 
             return new ResponseEntity<>("Token was sent to your email. Please check.", HttpStatus.OK);
         } else {
