@@ -54,11 +54,11 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>io.swagger</groupId>-->
-<!--			<artifactId>swagger-annotations</artifactId>-->
-<!--			<version>1.6.2</version> &lt;!&ndash; Use the appropriate version that matches your Swagger version &ndash;&gt;-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-annotations</artifactId>
+			<version>1.6.2</version> <!-- Use the appropriate version that matches your Swagger version -->
+		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
