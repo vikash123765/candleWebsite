@@ -25,13 +25,15 @@ public class User  {
     private Integer userId;
     private String userName;
     private String address;
-    private Long phoneNumber;
+    private String phoneNumber;
     //@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
     @Column(unique = true)
     private String userEmail;
     //@Size(min = 8)
     //@Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@$!%*?&#])[A-Z][A-Za-z0-9@$!%*?&#]+$", message = "password is not strong enough!!!")
     private String userPassword; //regex for strong password
+
+    @Column(length = 20)  // Adjust the length as necessary
     @Enumerated(EnumType.STRING)
     private Gender gender;
 

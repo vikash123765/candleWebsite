@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mark Order as Sent</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div id="orderDetails">
+  <label for="orderNumber">Order Number:</label>
+  <input type="text" id="orderNumber" placeholder="Enter Order Number">
+
+  <label for="trackingId">Tracking ID (Optional):</label>
+  <input type="text" id="trackingId" placeholder="Enter Tracking ID">
+
+  <button onclick="markOrderAsSent()">Mark as Sent</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+  function markOrderAsSent() {
+      const orderNumber = document.getElementById('orderNumber').value;
+      const trackingId = document.getElementById('trackingId').value;
+
+      const adminEmail = "yourAdminEmail@example.com";  // Replace with your admin email
+      const tokenValue = "yourTokenValue";  // Replace with the actual token value
+
+      fetch(`/order/sent/${orderNumber}/${trackingId}`, {
+          method: 'PUT',
+          headers: {
+              'Content-Type': 'application/json',
+              'email': adminEmail,
+              'x-auth-token': tokenValue
+          }
+      })
+      .then(response => response.json())
+      .then(data => {
+          document.getElementById('result').innerText = data;
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          document.getElementById('result').innerText = 'An error occurred. Please try again.';
+      });
+  }
+</script>
+
+</body>
+</html>

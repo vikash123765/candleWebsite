@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class ProductService {
 
     @Autowired
     IRepoUser iRepoUser;
+
 
 
     public String addProduct(String email, String tokenValue, Product productPost) {
@@ -94,14 +97,19 @@ public class ProductService {
     }
 
 
+
+
+
     public List<Product> availableByType(Type type) {
         return repoProduct.findProductAvailableByProductType(type);
 
     }
 
 
-    public List<Product> availableAndLessThenEqualPrice(Type type, double price) {
-        return repoProduct.findProductAvailableByProductTypeAndProductPriceLessThanEqual(type, price);
+
+
+    public List<Product> availableAndLessThenEqualPrice(Type type,double price) {
+      return repoProduct.findProductAvailableByProductTypeAndProductPriceLessThanEqual(type,price);
 
     }
 
@@ -115,16 +123,15 @@ public class ProductService {
     }
 
 
-    public String updatePriceByType(String email, String tokenValue, IncreasOrDeacrease increasOrDeacrease, Type type, float discount) {
+    public String updatePriceByType(String email, String tokenValue,IncreasOrDeacrease increasOrDeacrease, Type type, float discount) {
         if (authenticationService.authenticate(email, tokenValue)) {
-            int polarity = (increasOrDeacrease == IncreasOrDeacrease.INCREASE) ? 1 : -1;
+            int polarity =( increasOrDeacrease == IncreasOrDeacrease.INCREASE) ? 1:-1;
 
-            for (Product product : availableByType(type)) {
+            for (Product product : availableByType(type)){
 
                 double originalPrice = product.getProductPrice();
-                double priceAltering = originalPrice * (discount / 100) * polarity;
-                ;
-                double priceAfterAltering = originalPrice + priceAltering;
+                double priceAltering = originalPrice * (discount / 100) * polarity;;
+                double priceAfterAltering  = originalPrice + priceAltering;
                 String formattedPrice = String.format("%.2f", priceAfterAltering);
                 formattedPrice = formattedPrice.replace(',', '.');
                 product.setProductPrice(Double.parseDouble(formattedPrice));
@@ -144,19 +151,18 @@ public class ProductService {
     public String updatePriceById(String email, String tokenValue, Integer id, IncreasOrDeacrease increasOrDeacrease, float discount) {
         if (authenticationService.authenticate(email, tokenValue)) {
 
-            int polarity = (increasOrDeacrease == IncreasOrDeacrease.INCREASE) ? 1 : -1;
-            Product product = getProductById(id).orElseThrow();
-            double originalPrice = product.getProductPrice();
-            double priceAltering = originalPrice * (discount / 100) * polarity;
-            ;
-            double priceAfterAltering = originalPrice + priceAltering;
-            String formattedPrice = String.format("%.2f", priceAfterAltering);
-            formattedPrice = formattedPrice.replace(',', '.');
-            product.setProductPrice(Double.parseDouble(formattedPrice));
+                int polarity =( increasOrDeacrease == IncreasOrDeacrease.INCREASE) ? 1:-1;
+                Product product= getProductById(id).orElseThrow() ;
+                double originalPrice = product.getProductPrice();
+                double priceAltering = originalPrice * (discount / 100) * polarity;;
+                double priceAfterAltering  = originalPrice + priceAltering;
+                String formattedPrice = String.format("%.2f", priceAfterAltering);
+                formattedPrice = formattedPrice.replace(',', '.');
+                product.setProductPrice(Double.parseDouble(formattedPrice));
             repoProduct.save(product);
 
 
-            return "product with id: " + id + " price was updated";
+            return"product with idd: " + id + " price was updated";
 
 
         } else {
@@ -206,13 +212,12 @@ public class ProductService {
             return "Unauthenticated access!!!";
         }
     }
-
     public List<Product> findProductByName(String productName) {
 
         return repoProduct.findProductAvailableByProductName(productName);
     }
 
-    public String markProductAvailable(String adminEmail, String tokenValue, Integer productId) {
+    public String markProductAvailable(String adminEmail, String tokenValue,Integer productId) {
         if (authenticationService.authenticate(adminEmail, tokenValue)) {
 
             Product product = repoProduct.findById(productId).orElseThrow();
@@ -224,6 +229,8 @@ public class ProductService {
             return "product with id: " + productId + "was marked as available";
 
 
+
+
         } else {
             return "Un Authenticated access!!!";
         }
@@ -232,17 +239,22 @@ public class ProductService {
     }
 
 
-    public String markProductsAvailable(String adminEmail, String tokenValue, List<Integer> productIds) {
+
+
+
+    public String markProductsAvailable(String adminEmail, String tokenValue,List<Integer> productIds) {
         if (authenticationService.authenticate(adminEmail, tokenValue)) {
 
             List<Product> products = repoProduct.findAllById(productIds);
 
-            for (Product product : products) {
+            for (Product product: products){
                 product.setProductAvailable(true);
                 repoProduct.save(product);
             }
             //  repoProduct.saveAll(products);
             return "products with ids: " + productIds + "was marked as available";
+
+
 
 
         } else {
@@ -252,11 +264,12 @@ public class ProductService {
     }
 
     public List<Product> allAvailableProducts() {
-        return repoProduct.findByProductAvailable(true);
+        return  repoProduct.findByProductAvailable(true);
     }
 
 
-    public String markProductUnAvailable(String adminEmail, String tokenValue, Integer productId) {
+
+    public String markProductUnAvailable(String adminEmail, String tokenValue,Integer productId) {
         if (authenticationService.authenticate(adminEmail, tokenValue)) {
 
             Product product = repoProduct.findById(productId).orElseThrow();
@@ -273,9 +286,10 @@ public class ProductService {
         }
 
 
+
     }
 
-    public String markProductsUnAvailable(String adminEmail, String tokenValue, List<Integer> productIds) {
+    public String markProductsUnAvailable(String adminEmail, String tokenValue,List<Integer> productIds) {
         if (authenticationService.authenticate(adminEmail, tokenValue)) {
 
             List<Product> products = repoProduct.findAllById(productIds);
@@ -292,38 +306,32 @@ public class ProductService {
         }
 
 
+
+
     }
 
-
-    public ResponseEntity<String> productAlterInfo(String adminEmail, String tokenValue, Integer productId, Product productFrontEnd) {
-        if (authenticationService.authenticate(adminEmail, tokenValue)) {
-
-            Product product = repoProduct.findById(productId).orElseThrow();
-            if (product != null) {
-                product.setProductId(productId);
-                product.setProductAvailable(productFrontEnd.isProductAvailable());
-                product.setProductDescription(productFrontEnd.getProductDescription());
-                product.setProductName(productFrontEnd.getProductName());
-
-                product.setProductPrice(productFrontEnd.getProductPrice());
-
-                product.setProductType(productFrontEnd.getProductType());
+    @PostMapping("/addToCartLimit")
+    public ResponseEntity<String> numberOfAvailableProducts(@RequestParam Integer productId, @RequestParam Integer count) {
+        Product product = repoProduct.findById(productId).orElseThrow();
+        Integer currentStock = product.getStock();
+        if(currentStock <= 0 ) {
+            product.setProductAvailable(false);   // rmeove if still want to display the card but instead as sold out
 
 
-                repoProduct.save(product);
-
-                return new ResponseEntity<>("product with " + product.getProductId() + "id has been updated", HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("product with " + product.getProductId() + "has not been  updated", HttpStatus.BAD_REQUEST);
-
-            }
+        } else if (count > currentStock) {
+            return new ResponseEntity<>("Sorry, only " + currentStock + " available at the moment.", HttpStatus.BAD_REQUEST);
         }
-                return  new ResponseEntity<>("Un Authenticated access!!!",HttpStatus.UNAUTHORIZED);
-            }
+        else if (count <= currentStock) {
+
+            return new ResponseEntity<>("fine operation", HttpStatus.OK);
+        }
 
 
-
+        return new ResponseEntity<>("profduct do not exisst",HttpStatus.NOT_FOUND);
+    }
 
 }
+
+
 
 

@@ -22,13 +22,20 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer productId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_type")
     private Type productType;
+
     private String productName;
+    @Column(length = 1000)
     private String productDescription;
     //private  Integer quantity;
     private boolean productAvailable;
     @Column(name="price")
     private double productPrice;
+
+    private Integer stock;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> cartItems = new ArrayList<>();

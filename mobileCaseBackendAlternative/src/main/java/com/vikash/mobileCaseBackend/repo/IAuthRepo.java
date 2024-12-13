@@ -4,6 +4,10 @@ import com.vikash.mobileCaseBackend.model.AuthenticationToken;
 import com.vikash.mobileCaseBackend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+
 public interface IAuthRepo extends JpaRepository<AuthenticationToken,Long> {
 
 
@@ -15,10 +19,16 @@ public interface IAuthRepo extends JpaRepository<AuthenticationToken,Long> {
             return null;
         }
     }*/
+    
+    
 
 
 
     AuthenticationToken findByTokenValue(String tokenValue);
+
+
+
+    // AuthenticationToken findByAdmin_AdminEmail(String adminEmail);
 
     //User findUserEmailByTokenValue(String token);
 

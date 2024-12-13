@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Data
@@ -20,6 +21,9 @@ public class AuthenticationToken {
     private Long tokenId;
 
     private String tokenValue;
+
+
+
 
     private LocalDateTime tokenCreationDateTime;
 

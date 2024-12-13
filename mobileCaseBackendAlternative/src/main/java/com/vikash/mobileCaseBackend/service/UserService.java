@@ -21,6 +21,7 @@ import org.json.JSONObject;
 import javax.mail.MessagingException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
@@ -40,7 +41,7 @@ public class UserService {
   */
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ResponseEntity<Map<String, String>> userSignUp(User newUser) throws JsonProcessingException {
+    public ResponseEntity<Map<String, String>> userSignUp(User newUser) throws JsonProcessingException, NoSuchAlgorithmException {
         // Check if user already exists
         String newEmail = newUser.getUserEmail();
         User ifExistUser = userRepo.findByUserEmail(newEmail);
@@ -51,8 +52,20 @@ public class UserService {
             }
 
             if (ifExistUser.getUserEmail() != null) {
-                Map<String, String> responseBody = Map.of("message", "guest_user");
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(responseBody);
+
+                String currentPassword = newUser.getUserPassword();
+                String encryptedPass = PasswordEncryptor.encrypt(currentPassword);
+                ifExistUser.setPhoneNumber(newUser.getPhoneNumber());
+                ifExistUser.setUserEmail(ifExistUser.getUserEmail());
+                ifExistUser.setUserName(newUser.getUserName());
+                ifExistUser.setUserPassword(encryptedPass);
+                ifExistUser.setAddress(newUser.getAddress());
+                ifExistUser.setGender(newUser.getGender());
+
+                userRepo.save(ifExistUser);
+
+                Map<String, String> responseBody = Map.of("message", "account_created");
+                return ResponseEntity.status(HttpStatus.CREATED).body(responseBody); // Using 201 Created status
             }
         }
         String currentPassword = newUser.getUserPassword();
@@ -73,37 +86,55 @@ public class UserService {
     }
 
 
+
     public ResponseEntity<String> userSignIn(String email, String password) {
         User existingUser = userRepo.findByUserEmail(email);
+        AuthenticationToken tokenObj = existingUser.getAuthenticationToken();
 
-        if (existingUser == null) {
-            return new ResponseEntity<>("Not a valid email, please sign up first!", HttpStatus.BAD_REQUEST);
-        }
+        if (tokenObj != null && tokenObj.getTokenValue() != null) {
+            LocalDateTime tokenCreationDateTime = LocalDateTime.now();
+            tokenObj.setTokenCreationDateTime(tokenCreationDateTime);
+            authService.saveToken(tokenObj);
 
-        try {
-            String encryptedPassword = PasswordEncryptor.encrypt(password);
+            // Create a cookie header with the existing token value
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-Token", "token=" + tokenObj.getTokenValue());
+            headers.add("Access-Control-Expose-Headers", "X-Token");
+            headers.add("Access-Control-Allow-Headers", "X-Token");
 
-            if (existingUser.getUserPassword().equals(encryptedPassword)) {
-                AuthenticationToken token = new AuthenticationToken(existingUser);
+            return new ResponseEntity<>("Login successful!", headers, HttpStatus.OK);
 
-                // if (MailHandlerBase.sendEmail(email, "user signed in", "congratulations")) {
-                authService.createToken(token);
+        } else {
 
-                // Create a cookie header with the token value
-                HttpHeaders headers = new HttpHeaders();
-                headers.add("X-Token", "token=" + token.getTokenValue());
-                headers.add("Access-Control-Expose-Headers", "X-Token");
-                headers.add("Access-Control-Allow-Headers", "X-Token");
+            try {
+                String encryptedPassword = PasswordEncryptor.encrypt(password);
 
-                return new ResponseEntity<>("Login successful!", headers, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Error while generating token!!!", HttpStatus.INTERNAL_SERVER_ERROR);
+
+                if (existingUser.getUserPassword().equals(encryptedPassword)) {
+
+                    AuthenticationToken token = new AuthenticationToken(existingUser);
+
+                    LocalDateTime tokenCreationDateTime = LocalDateTime.now();
+
+                    token.setTokenCreationDateTime(tokenCreationDateTime);  // Set the token creation time
+                    // if (MailHandlerBase.sendEmail(email, "user signed in", "congratulations")) {
+                    authService.createToken(token);
+
+                    // Create a cookie header with the token value
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.add("X-Token", "token=" + token.getTokenValue());
+                    headers.add("Access-Control-Expose-Headers", "X-Token");
+                    headers.add("Access-Control-Allow-Headers", "X-Token");
+
+                    return new ResponseEntity<>("Login successful!", headers, HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>("Error while generating token!!!", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            } catch (Exception e) {
+                return new ResponseEntity<>("Invalid Credentials!!!", HttpStatus.UNAUTHORIZED);
             }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Invalid Credentials!!!", HttpStatus.UNAUTHORIZED);
         }
     }
-
 
     public ResponseEntity<String> userSgnOut(String token) {
 
@@ -127,23 +158,16 @@ public class UserService {
             return new ResponseEntity<>("User is not logged in", HttpStatus.NOT_FOUND);
         }
 
+
+
+
         if (actualToken.getUser() != null) {
             UserInfoDTO userInfoDTO = new UserInfoDTO();
             User user = actualToken.getUser();
-
             userInfoDTO.setUserName(user.getUserName());
             userInfoDTO.setUserEmail(user.getUserEmail());
 
-            long phoneNumber = user.getPhoneNumber();
-
-            if (phoneNumber >= Integer.MIN_VALUE && phoneNumber <= Integer.MAX_VALUE) {
-                userInfoDTO.setPhoneNumber((Long) phoneNumber);
-            } else {
-                // Handle the case where the phone number is too large for an int
-                // For example, throw an exception or set a default value
-                userInfoDTO.setPhoneNumber(0L);  // Set a default value or throw an exception
-            }
-
+            userInfoDTO.setPhoneNumber(user.getPhoneNumber());
             userInfoDTO.setAddress(user.getAddress());
             userInfoDTO.setPassword(user.getUserPassword());
             userInfoDTO.setGender(user.getGender());
@@ -160,9 +184,6 @@ public class UserService {
         User userBefore = actualToken.getUser();
 
         if (userBefore != null) {
-
-
-
 
             userBefore.setUserName(user.getUserName());
             userBefore.setUserEmail(user.getUserEmail());
@@ -208,7 +229,7 @@ public class UserService {
 
             String senderEmail = tokenObj.getUser().getUserEmail();
 
-            String adminEmail = "vikash.kosaraju1234@gmail.com";
+            String adminEmail = "vtscustomersupp@gmail.com";
             JSONObject messageObj = new JSONObject(message);
             String messageContent = messageObj.getString("message");
 
@@ -229,7 +250,7 @@ public class UserService {
     }
 
     public ResponseEntity<String> guestCustomerService(String subject, String senderEmail, String message) {
-        String adminEmail = "vikash.kosaraju1234@gmail.com";
+        String adminEmail = "vtscustomersupp@gmail.com";
         // Parse the JSON message to extract the message content
         JSONObject messageObj = new JSONObject(message);
         String messageContent = messageObj.getString("message");
@@ -242,6 +263,20 @@ public class UserService {
         MailHandlerBase.sendEmail(adminEmail, subject, fullMessage);
         return new ResponseEntity<>("Message was sent successfully", HttpStatus.OK);
     }
+
+
+
+/*  public ResponseEntity<String> getUserToken(String userEmail) {
+
+      User user = userRepo.findByUserEmail(userEmail);
+      String tokenValue = user.getAuthenticationToken().getTokenValue();
+
+      if (authService.authenticate(userEmail, tokenValue)) {
+          if (tokenValue != null && tokenValue.equals(userEmail)) {
+              return new ResponseEntity<>("this is the" + token + "value for : " + userEmail, HttpStatus.OK);
+          } return new ResponseEntity<>("there is not token value fr this email", HttpStatus.NOT_FOUND);
+      }
+  }*/
 }
 
 

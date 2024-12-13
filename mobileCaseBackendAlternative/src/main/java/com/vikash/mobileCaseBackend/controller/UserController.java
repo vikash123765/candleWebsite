@@ -36,10 +36,14 @@ public class UserController {
     @Autowired
     GuestCartService guestCartService;
 
+    @Autowired
+    PasswordService passwordService;
+
+
 
     // user sign up
     @PostMapping("user/signUp")
-    public ResponseEntity<Map<String, String>> userSignUp(@Valid @RequestBody User newUser) throws JsonProcessingException {
+    public ResponseEntity<Map<String, String>> userSignUp(@Valid @RequestBody User newUser) throws JsonProcessingException, NoSuchAlgorithmException {
         return userService.userSignUp(newUser);
     }
 
@@ -138,6 +142,11 @@ public class UserController {
         return orderService.finalizeGuestOrder(requestWrapper.getGuestOrderRequest(), requestWrapper.getJsonPayload());
     }
 
+ /*   @GetMapping("/getUserToken")
+    public ResponseEntity<String> getUserToken(@RequestHeader String userEmail ) {
+        return userService.getUserToken(userEmail);
+    }*/
+
 
 
 
@@ -201,6 +210,24 @@ public class UserController {
     @GetMapping("product/sortBy/price/{type}/asc")
     public List<Product> sortByPriceAscAndType(@PathVariable Type type){
         return productService.sortByPriceAscAndType(type);
+
+    }
+
+    @PostMapping("/resetPasswordToken")
+    public ResponseEntity<String> resetPasswordToken(  @RequestHeader String email) {
+
+        return passwordService.resetPasswordToken(email);
+    }
+
+    @PostMapping("/resetPassword")
+    public ResponseEntity<String> resetPassword( @RequestHeader("token") String token,@RequestHeader String email) throws NoSuchAlgorithmException {
+        // Validate the token and process the order
+        return passwordService.resetPassword(token,email);
+    }
+
+    @GetMapping("addToCartLimit")
+    public ResponseEntity<String>numberOfAvailableProducts(@RequestHeader("productId") Integer productId, @RequestHeader("count") Integer count){
+        return productService.numberOfAvailableProducts(productId,count);
 
     }
 

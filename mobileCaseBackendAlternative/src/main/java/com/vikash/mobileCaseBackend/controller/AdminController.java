@@ -126,13 +126,11 @@ public class AdminController {
 
         return orderService.markOrderAsDelivered(adminEmail,tokenValue,orderNr);
     }
-
-
-    // alter product
-    @PostMapping("product/alterInfo")
-    public ResponseEntity<String> productAlterInfo(@RequestHeader("email") String adminEmail, @RequestHeader("x-auth-token")  String tokenValue,@RequestHeader Integer productId,@RequestBody Product productFrontEnd ){
-        return productService.productAlterInfo(adminEmail,tokenValue,productId,productFrontEnd);
+  /*  @GetMapping("/getAdminToken")
+    public ResponseEntity<String> getAdminToken(@RequestHeader String adminEmail ) {
+        return adminService.getAdminToken(adminEmail);
     }
+*/
 
 
     // marlk product as avaiable

@@ -5,8 +5,17 @@ import com.vikash.mobileCaseBackend.model.AuthenticationToken;
 import com.vikash.mobileCaseBackend.model.User;
 import com.vikash.mobileCaseBackend.repo.IAuthRepo;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.chrono.ChronoLocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
@@ -15,9 +24,30 @@ public class AuthService {
     IAuthRepo iAuthRepo;
 
     public void createToken(AuthenticationToken token) {
+
         iAuthRepo.save(token);
 
     }
+
+
+
+
+
+
+ @Transactional
+    @Scheduled(fixedRate = 60000)  // runs every 60 seconds
+    public void removeExpiredTokens() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime thresholdTime = now.minusMinutes(30); // chnage to 30 after you ty it out
+
+        List<AuthenticationToken> allTokens = iAuthRepo.findAll();
+        List<AuthenticationToken> tokensToDelete = allTokens.stream()
+                .filter(token -> token.getTokenCreationDateTime().isBefore(thresholdTime))
+                .collect(Collectors.toList());
+
+        iAuthRepo.deleteAll(tokensToDelete);
+    }
+
 
 
     public boolean authenticate(String email, String tokenValue) {
@@ -28,7 +58,6 @@ public class AuthService {
             User user = tokenObj.getUser();
             Admin admin = tokenObj.getAdmin();
 
-
             if (user != null && user.getUserEmail().equals(email)) {
                 return true;
             } else if (admin != null && admin.getAdminEmail().equals(email)) {
@@ -37,6 +66,10 @@ public class AuthService {
 
         }
         return false;
+    }
+    public void saveToken(AuthenticationToken tokenObj) {
+
+        iAuthRepo.save(tokenObj);
     }
 
     public void deleteToken(String token) {
